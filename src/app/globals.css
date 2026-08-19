@@ -1,0 +1,68 @@
+html {
+  color-scheme: light;
+}
+
+html,
+body {
+  margin: 0;
+}
+
+.rich-text-viewer {
+  color: var(--mantine-color-neutral-8);
+  font-size: var(--mantine-font-size-lg);
+  line-height: 1.7;
+}
+
+.rich-text-viewer :where(p, ul, ol, blockquote, h2, h3) {
+  margin-top: 0;
+  margin-bottom: var(--mantine-spacing-xs);
+}
+
+.rich-text-viewer :where(ul, ol) {
+  margin-left: 0;
+  padding-left: 0;
+  list-style-position: inside;
+}
+
+.rich-text-viewer li {
+  margin-bottom: var(--mantine-spacing-2xs);
+  line-height: 1.65;
+}
+
+.rich-text-viewer :where(h2, h3) {
+  color: var(--mantine-color-brand-7);
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.rich-text-viewer h2 {
+  font-size: var(--mantine-font-size-2xl);
+}
+
+.rich-text-viewer h3 {
+  font-size: var(--mantine-font-size-xl);
+}
+
+.rich-text-viewer :where(strong, b) {
+  color: var(--mantine-color-brand-7);
+  font-weight: 700;
+}
+
+.rich-text-viewer blockquote {
+  border-left: 3px solid var(--mantine-color-brand-6);
+  padding-left: var(--mantine-spacing-md);
+  color: var(--mantine-color-dimmed);
+}
+
+.rich-text-viewer a {
+  color: var(--mantine-color-brand-7);
+  font-weight: 600;
+  text-decoration: none;
+  text-underline-offset: 3px;
+  transition: color 150ms ease, text-decoration-color 150ms ease;
+}
+
+.rich-text-viewer a:hover,
+.rich-text-viewer a:focus-visible {
+  text-decoration: underline;
+}
