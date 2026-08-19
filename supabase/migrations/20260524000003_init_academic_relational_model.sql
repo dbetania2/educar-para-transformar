@@ -23,7 +23,7 @@ create table if not exists public.profiles (
   is_active boolean not null default true,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  constraint profiles_email_check check (email is null or email ~* '^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$'),
+  constraint profiles_email_check check (email is null or email ~* '^[^@]+@[^@]+\\.[^@]+$'),
   constraint profiles_dni_check check (char_length(trim(dni)) >= 7)
 );
 
