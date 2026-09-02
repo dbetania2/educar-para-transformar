@@ -18,12 +18,12 @@ type TeacherCourseActionsMenuProps = {
 };
 
 export default function TeacherCourseActionsMenu({
-  courseHref,
-  gradesHref,
-  attendanceHref,
-  materialsHref,
-  coursesHref,
-}: TeacherCourseActionsMenuProps) {
+  courseUrl,
+  gradesUrl,
+  attendanceUrl,
+  materialsUrl,
+  coursesListUrl,
+}: TeacherCourseActionsProps) {
   return (
     <ActionsMenu
       label="Acciones del curso"
