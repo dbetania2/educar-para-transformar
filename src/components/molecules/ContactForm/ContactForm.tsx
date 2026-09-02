@@ -91,9 +91,9 @@ export default function ContactForm({
         </Card>
 
         <Group justify="flex-end">
-          <Button variant="default" onClick={() => setOpened(false)}>
+          <CTAButton variant="default" onClick={() => setOpened(false)}>
             {actions.review}
-          </Button>
+          </CTAButton>
           <CTAButton
             icon={<IconSend size={16} />}
             onClick={handleConfirmSend}
