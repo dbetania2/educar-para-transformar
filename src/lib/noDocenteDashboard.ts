@@ -25,7 +25,7 @@ export type NoDocenteTaskRecord = {
   created_at: string;
 };
 
-export type NoDocenteStudentRecord = {
+export type StudentRecord = {
   profile_id: string;
   full_name: string;
   dni: string;
@@ -36,7 +36,7 @@ export type NoDocenteStudentRecord = {
   active_courses: number;
 };
 
-export type NoDocenteContactMessageRecord = {
+export type ContactMessageRecord = {
   id: number;
   full_name: string;
   email: string;
@@ -46,7 +46,7 @@ export type NoDocenteContactMessageRecord = {
   created_at: string;
 };
 
-export type NoDocenteRequestRecord = {
+export type RequestRecord = {
   id: number;
   student_full_name: string;
   student_dni: string;
@@ -62,7 +62,7 @@ export type NoDocenteRequestRecord = {
   created_at: string;
 };
 
-export type NoDocenteRouteContext = {
+export type RouteContext = {
   user: {
     id: string;
     email: string | null;
