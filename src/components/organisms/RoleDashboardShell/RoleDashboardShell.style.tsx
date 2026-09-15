@@ -1,26 +1,139 @@
 import { alpha } from "@mantine/core";
 import { createStyles } from "@mantine/emotion";
 
-export const useStyles = createStyles((theme) => ({
+export const useStyles = createStyles((theme, _params, helpers) => ({
   shell: {
     minHeight: "100dvh",
     display: "flex",
+    flexDirection: "row",
+    background: "#f8fafc",
+  },
+  desktopSidebar: {
+    width: 250,
+    flexShrink: 0,
+    backgroundColor: "#0e1628",
+    color: theme.white,
+    display: "flex",
     flexDirection: "column",
-    background: "linear-gradient(180deg, #f6f9fc 0%, #edf3f9 100%)",
+    height: "100vh",
+    position: "sticky",
+    top: 0,
+    zIndex: 90,
+    boxShadow: "2px 0 12px rgba(0,0,0,0.12)",
+    [helpers.smallerThan("md")]: {
+      display: "none",
+    },
+  },
+  sidebarHeader: {
+    padding: "20px 20px 24px 20px",
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+  },
+  sidebarLogoBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: "#2563eb",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color: theme.white,
+    boxShadow: "0 4px 12px rgba(37, 99, 235, 0.35)",
+  },
+  sidebarBrandTitle: {
+    fontSize: 16,
+    fontWeight: 800,
+    color: theme.white,
+    lineHeight: 1.2,
+    letterSpacing: "-0.01em",
+  },
+  sidebarBrandSub: {
+    fontSize: 11,
+    color: "#94a3b8",
+    lineHeight: 1.2,
+  },
+  sidebarNav: {
+    flex: 1,
+    padding: "0 12px",
+    display: "flex",
+    flexDirection: "column",
+    gap: 4,
+    overflowY: "auto",
+  },
+  sidebarItem: {
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+    padding: "11px 14px",
+    borderRadius: 10,
+    color: "#94a3b8",
+    textDecoration: "none",
+    fontSize: 14,
+    fontWeight: 500,
+    transition: "all 140ms ease",
+    cursor: "pointer",
+    border: "none",
+    backgroundColor: "transparent",
+    width: "100%",
+    "&:hover": {
+      backgroundColor: "rgba(255, 255, 255, 0.07)",
+      color: theme.white,
+    },
+  },
+  sidebarItemActive: {
+    backgroundColor: "#1d4ed8 !important",
+    color: `${theme.white} !important`,
+    fontWeight: 600,
+    boxShadow: "0 4px 14px rgba(29, 78, 216, 0.35)",
+  },
+  sidebarFooter: {
+    padding: 16,
+    borderTop: "1px solid rgba(255, 255, 255, 0.08)",
+  },
+  sidebarLogoutBtn: {
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+    padding: "10px 14px",
+    borderRadius: 10,
+    color: "#94a3b8",
+    width: "100%",
+    backgroundColor: "transparent",
+    border: "none",
+    cursor: "pointer",
+    fontSize: 14,
+    fontWeight: 500,
+    transition: "all 140ms ease",
+    "&:hover": {
+      backgroundColor: "rgba(239, 68, 68, 0.12)",
+      color: "#f87171",
+    },
+  },
+  mainArea: {
+    flex: 1,
+    minWidth: 0,
+    display: "flex",
+    flexDirection: "column",
+    minHeight: "100dvh",
   },
   topBar: {
     position: "sticky",
     top: 0,
     zIndex: 80,
-    backgroundColor: alpha(theme.white, 0.96),
-    borderBottom: `1px solid ${alpha(theme.colors.neutral[8], 0.08)}`,
-    boxShadow: `0 10px 30px ${alpha(theme.colors.navy[9], 0.05)}`,
-    backdropFilter: "blur(8px)",
+    backgroundColor: theme.white,
+    borderBottom: "1px solid #e2e8f0",
+    boxShadow: "0 1px 3px rgba(0, 0, 0, 0.03)",
   },
   topBarInner: {
-    minHeight: 88,
+    minHeight: 64,
     display: "flex",
     alignItems: "center",
+  },
+  burgerMobile: {
+    [helpers.largerThan("md")]: {
+      display: "none",
+    },
   },
   brand: {
     color: theme.colors.brand[7],
@@ -31,7 +144,7 @@ export const useStyles = createStyles((theme) => ({
   },
   content: {
     flex: 1,
-    paddingBlock: theme.spacing.pagePadSm,
+    paddingBlock: theme.spacing.lg,
   },
   contentInner: {
     width: "100%",
@@ -49,7 +162,6 @@ export const useStyles = createStyles((theme) => ({
     backgroundColor: alpha(theme.white, 0.92),
     boxShadow: `0 20px 40px ${alpha(theme.colors.navy[9], 0.06)}`,
   },
-
   navGroup: {
     borderBottom: 0,
     "&:last-child": {

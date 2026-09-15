@@ -4,10 +4,15 @@ import { usePathname } from "next/navigation";
 import type { ActionsMenuItem } from "@/components/molecules";
 import {
   IconBook2,
+  IconChartBar,
   IconFileDescription,
+  IconHome,
+  IconKey,
   IconLogout,
   IconNews,
   IconRefresh,
+  IconSettings,
+  IconShield,
   IconUserPlus,
   IconUsers,
 } from "@tabler/icons-react";
@@ -21,13 +26,33 @@ type AdminShellProps = {
 const adminNavigation = [
   {
     href: "/admin/solicitudes",
-    label: "Solicitudes",
-    icon: IconFileDescription,
+    label: "Inicio",
+    icon: IconHome,
   },
   {
     href: "/admin/usuarios",
     label: "Usuarios",
     icon: IconUsers,
+  },
+  {
+    href: "/admin/roles",
+    label: "Roles",
+    icon: IconShield,
+  },
+  {
+    href: "/admin/permisos",
+    label: "Permisos",
+    icon: IconKey,
+  },
+  {
+    href: "/admin/reportes",
+    label: "Reportes",
+    icon: IconChartBar,
+  },
+  {
+    href: "/admin/configuracion",
+    label: "Configuración",
+    icon: IconSettings,
   },
   {
     href: "/admin/cursos",

@@ -3,19 +3,23 @@
 import { usePathname, useRouter } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import {
+  ActionIcon,
+  Avatar,
   Box,
   Burger,
   Button,
   Collapse,
   Drawer,
   Group,
+  Indicator,
   List,
+  Menu,
   Modal,
   Stack,
   Text,
-  Title,
+  UnstyledButton,
 } from "@mantine/core";
-import { IconChevronDown, type Icon, type IconLogout } from "@tabler/icons-react";
+import { IconBell, IconBox, IconChevronDown, type Icon, type IconLogout } from "@tabler/icons-react";
 
 import { AdminDrawerItem, CTAButton, PaddingContainer } from "@/components/atoms";
 import { ActionsMenu, type ActionsMenuItem } from "@/components/molecules";
@@ -143,6 +147,53 @@ export default function RoleDashboardShell({
         </Stack>
       </Modal>
 
+      {/* Desktop Persistent Sidebar */}
+      <Box className={classes.desktopSidebar}>
+        <Box className={classes.sidebarHeader}>
+          <Box className={classes.sidebarLogoBox}>
+            <IconBox size={22} stroke={2.2} />
+          </Box>
+          <Box>
+            <Text className={classes.sidebarBrandTitle}>{title}</Text>
+            <Text className={classes.sidebarBrandSub}>{subtitle}</Text>
+          </Box>
+        </Box>
+
+        <Box className={classes.sidebarNav}>
+          {navigation.map((item) => {
+            const isActive = isActivePath(pathname, item.href, item.exact);
+            const IconComp = item.icon;
+
+            return (
+              <Box
+                key={item.href}
+                component="a"
+                href={item.href}
+                className={
+                  isActive
+                    ? `${classes.sidebarItem} ${classes.sidebarItemActive}`
+                    : classes.sidebarItem
+                }
+              >
+                <IconComp size={20} stroke={2} />
+                <span>{item.label}</span>
+              </Box>
+            );
+          })}
+        </Box>
+
+        <Box className={classes.sidebarFooter}>
+          <button
+            type="button"
+            onClick={() => setLogoutModalOpened(true)}
+            className={classes.sidebarLogoutBtn}
+          >
+            <logoutAction.icon size={20} stroke={2} />
+            <span>{logoutAction.label}</span>
+          </button>
+        </Box>
+      </Box>
+
       <Drawer
         opened={menuOpened}
         onClose={() => setMenuOpened(false)}
@@ -166,15 +217,21 @@ export default function RoleDashboardShell({
                       label={item.label}
                       icon={item.icon}
                       isActive={isActive}
-                      onClick={() => setExpandedNavItems((current) => ({
-                        ...current,
-                        [item.href]: !(current[item.href] ?? isActive),
-                      }))}
+                      onClick={() =>
+                        setExpandedNavItems((current) => ({
+                          ...current,
+                          [item.href]: !(current[item.href] ?? isActive),
+                        }))
+                      }
                       className={classes.navButton}
                       activeClassName={classes.navButtonActive}
                       iconClassName={classes.navIconWrap}
                       labelClassName={classes.navItemTitle}
-                      chevronClassName={isExpanded ? `${classes.navChevron} ${classes.navChevronOpen}` : classes.navChevron}
+                      chevronClassName={
+                        isExpanded
+                          ? `${classes.navChevron} ${classes.navChevronOpen}`
+                          : classes.navChevron
+                      }
                       chevronIcon={IconChevronDown}
                     />
                     <Collapse in={isExpanded}>
@@ -185,7 +242,11 @@ export default function RoleDashboardShell({
                               component="a"
                               href={child.href}
                               onClick={() => setMenuOpened(false)}
-                              className={isActivePath(pathname, child.href, true) ? `${classes.navChildLink} ${classes.navChildLinkActive}` : classes.navChildLink}
+                              className={
+                                isActivePath(pathname, child.href, true)
+                                  ? `${classes.navChildLink} ${classes.navChildLinkActive}`
+                                  : classes.navChildLink
+                              }
                             >
                               {child.label}
                             </Box>
@@ -217,41 +278,61 @@ export default function RoleDashboardShell({
         </Stack>
       </Drawer>
 
-      <Box component="header" className={classes.topBar}>
-        <PaddingContainer size="xl" className={classes.topBarInner}>
-          <Group justify="space-between" w="100%" wrap="nowrap">
-            <Group gap="sm" wrap="nowrap">
-              <Burger
-                opened={menuOpened}
-                onClick={() => setMenuOpened((current) => !current)}
-                size="sm"
-                aria-label={menuAriaLabel}
-              />
-              <Box>
-                <Title order={4} className={classes.brand}>
-                  {title}
-                </Title>
-                <Text size="sm" className={classes.brandSubtle}>
-                  {subtitle}
-                </Text>
-              </Box>
+      <Box className={classes.mainArea}>
+        <Box component="header" className={classes.topBar}>
+          <PaddingContainer size="xl" className={classes.topBarInner}>
+            <Group justify="space-between" w="100%" wrap="nowrap">
+              <Group gap="sm" wrap="nowrap">
+                <Burger
+                  opened={menuOpened}
+                  onClick={() => setMenuOpened((current) => !current)}
+                  size="sm"
+                  aria-label={menuAriaLabel}
+                  className={classes.burgerMobile}
+                />
+              </Group>
+
+              <Group gap="md" wrap="nowrap" align="center">
+                {topBarSlot}
+                <Indicator color="red" size={8} offset={4} processing>
+                  <ActionIcon variant="subtle" color="gray" size="lg" radius="xl" aria-label="Notificaciones">
+                    <IconBell size={20} stroke={1.8} />
+                  </ActionIcon>
+                </Indicator>
+
+                <Menu position="bottom-end" shadow="md" width={200}>
+                  <Menu.Target>
+                    <UnstyledButton style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <Avatar color="blue" radius="xl" size="md" style={{ fontWeight: 700, backgroundColor: "#2563eb", color: "#ffffff" }}>
+                        DA
+                      </Avatar>
+                      <IconChevronDown size={14} style={{ color: "#64748b" }} />
+                    </UnstyledButton>
+                  </Menu.Target>
+                  <Menu.Dropdown>
+                    <Menu.Label>Administrador</Menu.Label>
+                    {resolvedTopBarActions.length > 0 ? (
+                      <ActionsMenu label={topBarActionsLabel} items={resolvedTopBarActions} />
+                    ) : (
+                      <Menu.Item color="red" leftSection={<logoutAction.icon size={16} />} onClick={() => setLogoutModalOpened(true)}>
+                        Cerrar sesión
+                      </Menu.Item>
+                    )}
+                  </Menu.Dropdown>
+                </Menu>
+              </Group>
             </Group>
+          </PaddingContainer>
+        </Box>
 
-            <Group gap="xs" wrap="nowrap">
-              {topBarSlot}
-              <ActionsMenu label={topBarActionsLabel} items={resolvedTopBarActions} />
-            </Group>
-          </Group>
-        </PaddingContainer>
+        <Box className={classes.content}>
+          <PaddingContainer size="xl" className={classes.contentInner}>
+            {children}
+          </PaddingContainer>
+        </Box>
+
+        {footer ? <Box component="footer">{footer}</Box> : null}
       </Box>
-
-      <Box className={classes.content}>
-        <PaddingContainer size="xl" className={classes.contentInner}>
-          {children}
-        </PaddingContainer>
-      </Box>
-
-      {footer ? <Box component="footer">{footer}</Box> : null}
     </Box>
   );
 }
