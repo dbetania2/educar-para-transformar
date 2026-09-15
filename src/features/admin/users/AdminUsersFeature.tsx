@@ -1,7 +1,7 @@
 "use client";
 
-import { ActionIcon, Alert, Badge, Box, Button, Card, Drawer, Grid, GridCol, Group, NumberInput, PasswordInput, Select, SimpleGrid, Stack, Text, Textarea, TextInput, Title, Tooltip } from "@mantine/core";
-import { IconAlertCircle, IconEye, IconPencil, IconSearch, IconShieldPlus, IconTrash } from "@tabler/icons-react";
+import { ActionIcon, Alert, Badge, Box, Button, Card, Drawer, Grid, GridCol, Group, Menu, NumberInput, PasswordInput, Select, SimpleGrid, Stack, Text, Textarea, TextInput, Title, Tooltip } from "@mantine/core";
+import { IconAlertCircle, IconAt, IconCalendar, IconChevronDown, IconChevronLeft, IconChevronRight, IconClock, IconCopy, IconCreditCard, IconEye, IconEyeOff, IconId, IconLink, IconPencil, IconPlus, IconRefresh, IconSearch, IconShield, IconShieldCheck, IconShieldPlus, IconTrash, IconUser, IconUsers } from "@tabler/icons-react";
 
 import { CTAButton } from "@/components/atoms";
 import { roleUsesLegajo } from "@/lib/auth/legajo";
@@ -11,6 +11,80 @@ import { useAdminUsers } from "@/features/admin/users/useAdminUsers";
 import type { AdminUser } from "@/features/admin/users/types";
 import { formatDateTime } from "@/lib/utils/formatDateTime";
 import { useStyles } from "@/components/templates/AdminUsersTemplate.style";
+
+function getRoleDescription(role: string): string {
+  if (role === "tutor") return "Puede gestionar y acompañar a los estudiantes a su cargo.";
+  if (role === "docente") return "Puede gestionar calificaciones, asistencias y contenidos de sus cursos.";
+  if (role === "alumno") return "Acceso a cursos, calificaciones, materiales y ficha del estudiante.";
+  if (role === "administrativo") return "Acceso completo a la gestión del campus y usuarios.";
+  if (role === "no_docente") return "Acceso a gestiones operativas y administrativas asignadas.";
+  return "Usuario del sistema.";
+}
+
+function getUserInitials(name?: string | null, email?: string | null): string {
+  if (name && name.trim()) {
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return parts[0].slice(0, 2).toUpperCase();
+  }
+  if (email) {
+    return email.slice(0, 2).toUpperCase();
+  }
+  return "U";
+}
+
+function getUserAvatarBg(role: string, name?: string | null): string {
+  if (role === "administrativo") return "#2563eb";
+  if (role === "tutor") {
+    if (name?.toLowerCase().includes("ricardo")) return "#16a34a";
+    if (name?.toLowerCase().includes("carolina")) return "#db2777";
+    return "#7c3aed";
+  }
+  if (role === "docente") {
+    if (name?.toLowerCase().includes("agustin")) return "#d97706";
+    if (name?.toLowerCase().includes("nicolas")) return "#4f46e5";
+    return "#0d9488";
+  }
+  return "#2563eb";
+}
+
+function renderRoleBadge(role: string, classes: Record<string, string>) {
+  if (role === "administrativo") {
+    return (
+      <span className={`${classes.roleBadge} ${classes.badgeAdmin}`}>
+        <IconShieldCheck size={14} /> ADMINISTRATIVO
+      </span>
+    );
+  }
+  if (role === "tutor") {
+    return (
+      <span className={`${classes.roleBadge} ${classes.badgeTutor}`}>
+        <IconUser size={14} /> TUTOR
+      </span>
+    );
+  }
+  if (role === "docente") {
+    return (
+      <span className={`${classes.roleBadge} ${classes.badgeDocente}`}>
+        <IconShieldCheck size={14} /> DOCENTE
+      </span>
+    );
+  }
+  if (role === "alumno") {
+    return (
+      <span className={`${classes.roleBadge} ${classes.badgeAlumno}`}>
+        <IconUser size={14} /> ALUMNO
+      </span>
+    );
+  }
+  return (
+    <span className={`${classes.roleBadge} ${classes.badgeNoDocente}`}>
+      <IconUser size={14} /> {USER_ROLE_LABELS[role as AppUserRole] ?? role}
+    </span>
+  );
+}
 
 type AdminBreadcrumb = {
   label: string;
@@ -147,142 +221,114 @@ export default function AdminUsersFeature({
   const userTableColumns: ResponsiveDataTableColumn<AdminUser>[] = [
     {
       key: "name",
-      header: <Text className={classes.tableHeader}>Usuario</Text>,
-      mobileMinWidth: 240,
-      render: (user) => (
-        <Stack gap={4}>
-          <Text fw={700} className={classes.userPrimary}>
-            {user.fullName || "Sin nombre"}
-          </Text>
-          <Text size="sm" className={classes.userSecondary}>
-            {user.email}
-          </Text>
-          <Text size="xs" c="dimmed">{user.legajo ?? user.id}</Text>
-        </Stack>
-      ),
+      header: <Text className={classes.tableHeader}>USUARIO</Text>,
+      mobileMinWidth: 260,
+      render: (user) => {
+        const initials = getUserInitials(user.fullName, user.email);
+        const avatarBg = getUserAvatarBg(user.role, user.fullName);
+
+        return (
+          <Box className={classes.userCell}>
+            <Box className={classes.userAvatar} style={{ backgroundColor: avatarBg }}>
+              {initials}
+            </Box>
+            <Stack gap={2}>
+              <Text className={classes.userPrimary}>
+                {user.fullName || "Sin nombre"}
+              </Text>
+              <Text className={classes.userSecondary}>
+                {user.email}
+              </Text>
+              <Text className={classes.userId}>
+                {user.legajo ?? user.id}
+              </Text>
+            </Stack>
+          </Box>
+        );
+      },
     },
     {
       key: "role",
-      header: <Text className={classes.tableHeader}>Rol</Text>,
+      header: <Text className={classes.tableHeader}>ROL</Text>,
       mobileMinWidth: 150,
       noWrap: true,
-      render: (user) => (
-        <Badge variant="light" color="brand.7" radius="xl">
-          {USER_ROLE_LABELS[user.role] ?? user.role}
-        </Badge>
-      ),
+      render: (user) => renderRoleBadge(user.role, classes),
     },
     {
       key: "created",
-      header: <Text className={classes.tableHeader}>Alta</Text>,
-      mobileMinWidth: 170,
+      header: <Text className={classes.tableHeader}>ALTA</Text>,
+      mobileMinWidth: 180,
       noWrap: true,
       render: (user) => (
-        <Badge variant="light" color="brand.6" radius="xl">
-          {formatDateTime(user.createdAt)}
-        </Badge>
+        <Box className={classes.dateCell}>
+          <IconCalendar size={15} style={{ color: "#94a3b8" }} />
+          <span>{formatDateTime(user.createdAt)}</span>
+        </Box>
       ),
     },
     {
       key: "last-sign-in",
-      header: <Text className={classes.tableHeader}>Último acceso</Text>,
-      mobileMinWidth: 170,
+      header: <Text className={classes.tableHeader}>ÚLTIMO ACCESO</Text>,
+      mobileMinWidth: 180,
       noWrap: true,
-      render: (user) => <Text size="sm">{formatDateTime(user.lastSignInAt)}</Text>,
+      render: (user) => {
+        if (!user.lastSignInAt) {
+          return (
+            <Box className={classes.noRecordCell}>
+              <span className={classes.greenDot} />
+              <span>Sin registro</span>
+            </Box>
+          );
+        }
+
+        return (
+          <Box className={classes.dateCell}>
+            <IconClock size={15} style={{ color: "#94a3b8" }} />
+            <span>{formatDateTime(user.lastSignInAt)}</span>
+          </Box>
+        );
+      },
     },
     {
       key: "actions",
-      header: <Text className={classes.tableHeader}>Acciones</Text>,
+      header: <Text className={classes.tableHeader}>ACCIONES</Text>,
       mobileMinWidth: 120,
       noWrap: true,
       render: (user) => (
-        <Group gap="xs" wrap="nowrap">
+        <Group gap={6} wrap="nowrap">
           <Tooltip label="Ver usuario">
             <ActionIcon
-              variant="transparent"
+              variant="subtle"
               radius="xl"
-              size="lg"
+              size="md"
+              className={classes.actionIconBtn}
               aria-label={`Ver ${user.fullName || user.email}`}
               onClick={() => void handleOpenUserView(user.id)}
-              styles={{
-                root: {
-                  border: "none",
-                  backgroundColor: "transparent",
-                  transition: "transform 160ms ease",
-                  "&:hover": {
-                    transform: "translateY(-1px)",
-                    backgroundColor: "transparent",
-                  },
-                  "& svg": {
-                    color: "var(--mantine-color-black)",
-                    transition: "color 160ms ease",
-                  },
-                  "&:hover svg": {
-                    color: "var(--mantine-color-brand-7)",
-                  },
-                },
-              }}
             >
-              <IconEye size={18} />
+              <IconEye size={17} />
             </ActionIcon>
           </Tooltip>
           <Tooltip label="Editar usuario">
             <ActionIcon
-              variant="transparent"
+              variant="subtle"
               radius="xl"
-              size="lg"
+              size="md"
+              className={classes.actionIconBtn}
               aria-label={`Editar ${user.fullName || user.email}`}
               onClick={() => void handleOpenUserEdit(user.id)}
-              styles={{
-                root: {
-                  border: "none",
-                  backgroundColor: "transparent",
-                  transition: "transform 160ms ease",
-                  "&:hover": {
-                    transform: "translateY(-1px)",
-                    backgroundColor: "transparent",
-                  },
-                  "& svg": {
-                    color: "var(--mantine-color-black)",
-                    transition: "color 160ms ease",
-                  },
-                  "&:hover svg": {
-                    color: "var(--mantine-color-brand-7)",
-                  },
-                },
-              }}
             >
-              <IconPencil size={18} />
+              <IconPencil size={17} />
             </ActionIcon>
           </Tooltip>
           <Tooltip label="Eliminar usuario">
-            <ActionIcon
-              variant="transparent"
-              radius="xl"
-              size="lg"
+            <button
+              type="button"
+              className={classes.deleteActionBtn}
               aria-label={`Eliminar ${user.fullName || user.email}`}
               onClick={() => void handleOpenDeleteUser(user.id)}
-              styles={{
-                root: {
-                  border: "none",
-                  backgroundColor: "transparent",
-                  transition: "transform 160ms ease",
-                  "&:hover": {
-                    transform: "translateY(-1px)",
-                    backgroundColor: "transparent",
-                  },
-                  "& svg": {
-                    color: "var(--mantine-color-red-7)",
-                    transition: "color 160ms ease",
-                  },
-                  "&:hover svg": {
-                    color: "var(--mantine-color-red-9)",
-                  },
-                },
-              }}
             >
-              <IconTrash size={18} />
-            </ActionIcon>
+              <IconTrash size={16} />
+            </button>
           </Tooltip>
         </Group>
       ),
@@ -405,14 +451,25 @@ export default function AdminUsersFeature({
       <Drawer
         opened={viewModalOpened}
         onClose={handleCloseUserView}
-        title="Detalle del usuario"
+        title={
+          <Group gap="sm" wrap="nowrap" align="center">
+            <Box className={classes.drawerHeaderIconCircle}>
+              <IconUser size={18} />
+            </Box>
+            <Box>
+              <Text fw={700} size="md" c="#0f172a" style={{ lineHeight: 1.2 }}>
+                Detalle del usuario
+              </Text>
+              <Text size="xs" c="#94a3b8" style={{ lineHeight: 1.2 }}>
+                Datos principales del usuario autenticable.
+              </Text>
+            </Box>
+          </Group>
+        }
         position="right"
-        size="min(100vw, 760px)"
+        size="min(100vw, 680px)"
         padding="xl"
       >
-        <Stack gap="xs" mb="lg">
-          <Text size="sm" c="dimmed">Datos principales del usuario autenticable.</Text>
-        </Stack>
         {detailError ? (
           <Alert variant="filled" color="red" radius="md" icon={<IconAlertCircle size={18} />}>
             {detailError}
@@ -422,147 +479,202 @@ export default function AdminUsersFeature({
         {isLoadingDetail ? <Text c="dimmed">Cargando detalle del usuario...</Text> : null}
 
         {selectedUser ? (
-          <Card withBorder radius="md" p={{ base: "cardPadSm", md: "cardPadLg" }} className={classes.detailCard}>
-            <Stack gap="sectionGapLg">
-              <Box>
-                <Group justify="space-between" align="flex-start" wrap="wrap">
-                  <Box>
-                    <Title order={3} c="brand.7">
-                      {selectedUser.fullName || "Usuario sin nombre"}
-                    </Title>
-                    <Text size="sm" c="dimmed" mt={4}>
-                      {selectedUser.email}
-                    </Text>
+          <Stack gap="md" mt="md">
+            {/* Top User Hero Card */}
+            <Box className={classes.detailHeroCard}>
+              <Group justify="space-between" align="flex-start" wrap="wrap" gap="md">
+                <Group gap="md" align="center">
+                  <Box className={classes.detailAvatarLarge} style={{ backgroundColor: getUserAvatarBg(selectedUser.role, selectedUser.fullName) }}>
+                    {getUserInitials(selectedUser.fullName, selectedUser.email)}
                   </Box>
-                  <Badge variant="light" color={getRequestStatusColor(selectedUser.requestStatus)} radius="xl" size="lg">
-                    {getRequestStatusLabel(selectedUser.requestStatus)}
-                  </Badge>
+                  <Stack gap={3}>
+                    <Text className={classes.detailHeroName}>
+                      {selectedUser.fullName || "Usuario sin nombre"}
+                    </Text>
+                    <Group gap={4} align="center">
+                      <Text fw={700} size="sm" c="#94a3b8">@</Text>
+                      <Text className={classes.detailHeroEmail}>
+                        {selectedUser.email}
+                      </Text>
+                    </Group>
+                    <Box mt={4}>
+                      <span className={classes.detailIdBadge}>
+                        ID: {selectedUser.legajo ?? selectedUser.id.slice(0, 8)}
+                        <button
+                          type="button"
+                          className={classes.copyBtn}
+                          title="Copiar ID"
+                          onClick={() => {
+                            navigator.clipboard.writeText(selectedUser.legajo ?? selectedUser.id);
+                          }}
+                        >
+                          <IconCopy size={13} />
+                        </button>
+                      </span>
+                    </Box>
+                  </Stack>
                 </Group>
+
+                <Stack gap="xs" align="flex-end">
+                  {renderRoleBadge(selectedUser.role, classes)}
+                  <span className={classes.statusActiveBadge}>
+                    <span className={classes.greenDot} /> Activo
+                  </span>
+                </Stack>
+              </Group>
+            </Box>
+
+            {/* 2-column Grid of Detail Cards */}
+            <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
+              {/* Card 1: ROL */}
+              <Box className={classes.detailInfoCard}>
+                <Box className={classes.detailIconCircle}>
+                  <IconUser size={20} />
+                </Box>
+                <Box style={{ flex: 1, minWidth: 0 }}>
+                  <span className={classes.detailCardLabel}>ROL</span>
+                  <div className={classes.detailCardValue}>
+                    {USER_ROLE_LABELS[selectedUser.role] ?? selectedUser.role}
+                  </div>
+                  <span className={classes.detailCardSub}>
+                    {getRoleDescription(selectedUser.role)}
+                  </span>
+                </Box>
               </Box>
 
-              <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg" verticalSpacing="lg">
-                <Card withBorder radius="md" p="md" bg="white">
-                  <Stack gap={6}>
-                    <Text className={classes.infoLabel}>Rol</Text>
-                    <Text fw={700} className={classes.infoValue}>{USER_ROLE_LABELS[selectedUser.role] ?? selectedUser.role}</Text>
-                  </Stack>
-                </Card>
-                <Card withBorder radius="md" p="md" bg="white">
-                  <Stack gap={6}>
-                    <Text className={classes.infoLabel}>Legajo</Text>
-                    <Text ff="monospace" size="sm" className={classes.infoValue}>{selectedUser.legajo ?? "Sin asignar"}</Text>
-                  </Stack>
-                </Card>
-                <Card withBorder radius="md" p="md" bg="white">
-                  <Stack gap={6}>
-                    <Text className={classes.infoLabel}>DNI</Text>
-                    <Text fw={700} className={classes.infoValue}>{selectedUser.dni ?? "Sin dato"}</Text>
-                  </Stack>
-                </Card>
-                <Card withBorder radius="md" p="md" bg="white">
-                  <Stack gap={6}>
-                    <Text className={classes.infoLabel}>ID de usuario</Text>
-                    <Text ff="monospace" size="sm" className={classes.infoValue}>{selectedUser.id}</Text>
-                  </Stack>
-                </Card>
-                <Card withBorder radius="md" p="md" bg="white">
-                  <Stack gap={6}>
-                    <Text className={classes.infoLabel}>Creado</Text>
-                    <Text fw={700} className={classes.infoValue}>{formatDateTime(selectedUser.createdAt)}</Text>
-                  </Stack>
-                </Card>
-                <Card withBorder radius="md" p="md" bg="white">
-                  <Stack gap={6}>
-                    <Text className={classes.infoLabel}>Último acceso</Text>
-                    <Text fw={700} className={classes.infoValue}>{formatDateTime(selectedUser.lastSignInAt)}</Text>
-                  </Stack>
-                </Card>
-              </SimpleGrid>
+              {/* Card 2: PERMISOS */}
+              <Box className={classes.detailInfoCard}>
+                <Box className={classes.detailIconCircle}>
+                  <IconShieldCheck size={20} />
+                </Box>
+                <Box style={{ flex: 1, minWidth: 0 }}>
+                  <span className={classes.detailCardLabel}>PERMISOS</span>
+                  <div className={classes.detailCardValue}>
+                    {getRequestStatusLabel(selectedUser.requestStatus)}
+                  </div>
+                  <span className={classes.detailCardSub}>
+                    No tiene permisos extraordinarios asignados.
+                  </span>
+                </Box>
+              </Box>
 
-              <Card withBorder radius="md" p="md" bg="white">
-                <Stack gap={6}>
-                  <Text className={classes.infoLabel}>Solicitud asociada</Text>
-                  <Text fw={700} className={classes.infoValue}>{selectedUser.requestStudentFullName || "Sin solicitud vinculada"}</Text>
-                  {(selectedUser.dni ?? selectedUser.requestStudentDni) ? (
-                    <Text size="sm" c="dimmed">DNI vinculado: <strong>{selectedUser.dni ?? selectedUser.requestStudentDni}</strong></Text>
-                  ) : null}
-                  {selectedUser.dni ?? selectedUser.requestStudentDni ? (
-                    <Alert variant="light" color="blue" radius="md" title="Acceso inicial">
-                      La contraseña inicial es el DNI del usuario: <strong>{selectedUser.dni ?? selectedUser.requestStudentDni}</strong>.
-                    </Alert>
-                  ) : null}
-                </Stack>
-              </Card>
+              {/* Card 3: DNI */}
+              <Box className={classes.detailInfoCard}>
+                <Box className={classes.detailIconCircle}>
+                  <IconCalendar size={20} />
+                </Box>
+                <Box style={{ flex: 1, minWidth: 0 }}>
+                  <span className={classes.detailCardLabel}>DNI</span>
+                  <div className={classes.detailCardValue}>
+                    {selectedUser.dni ?? "Sin dato"}
+                  </div>
+                </Box>
+              </Box>
 
-              {selectedUser.linkedGuardians.length > 0 ? (
-                <Card withBorder radius="md" p="md" bg="white">
-                  <Stack gap="sm">
-                    <Text className={classes.infoLabel}>Tutores vinculados</Text>
+              {/* Card 4: LEGAJO */}
+              <Box className={classes.detailInfoCard}>
+                <Box className={classes.detailIconCircle}>
+                  <IconId size={20} />
+                </Box>
+                <Box style={{ flex: 1, minWidth: 0 }}>
+                  <span className={classes.detailCardLabel}>LEGAJO</span>
+                  <div className={classes.detailCardValue}>
+                    {selectedUser.legajo ?? "Sin asignar"}
+                  </div>
+                </Box>
+              </Box>
+
+              {/* Card 5: CREADO */}
+              <Box className={classes.detailInfoCard}>
+                <Box className={classes.detailIconCircle}>
+                  <IconCalendar size={20} />
+                </Box>
+                <Box style={{ flex: 1, minWidth: 0 }}>
+                  <span className={classes.detailCardLabel}>CREADO</span>
+                  <div className={classes.detailCardValue}>
+                    {formatDateTime(selectedUser.createdAt)}
+                  </div>
+                  <span className={classes.detailCardSub}>
+                    Usuario registrado en el sistema.
+                  </span>
+                </Box>
+              </Box>
+
+              {/* Card 6: ÚLTIMO ACCESO */}
+              <Box className={classes.detailInfoCard}>
+                <Box className={classes.detailIconCircle}>
+                  <IconEyeOff size={20} />
+                </Box>
+                <Box style={{ flex: 1, minWidth: 0 }}>
+                  <span className={classes.detailCardLabel}>ÚLTIMO ACCESO</span>
+                  <div className={classes.detailCardValue}>
+                    {selectedUser.lastSignInAt ? formatDateTime(selectedUser.lastSignInAt) : "Sin registro"}
+                  </div>
+                  <span className={classes.detailCardSub}>
+                    {selectedUser.lastSignInAt ? "Fecha del último acceso al sistema." : "Aún no se ha registrado un acceso."}
+                  </span>
+                </Box>
+              </Box>
+            </SimpleGrid>
+
+            {/* Card 7: SOLICITUD ASOCIADA */}
+            <Box className={classes.detailInfoCard}>
+              <Box className={classes.detailIconCircle}>
+                <IconLink size={20} />
+              </Box>
+              <Box style={{ flex: 1, minWidth: 0 }}>
+                <span className={classes.detailCardLabel}>SOLICITUD ASOCIADA</span>
+                <div className={classes.detailCardValue}>
+                  {selectedUser.requestStudentFullName || "Sin solicitud vinculada"}
+                </div>
+                {(selectedUser.dni ?? selectedUser.requestStudentDni) ? (
+                  <span className={classes.detailCardSub}>
+                    DNI vinculado: {selectedUser.dni ?? selectedUser.requestStudentDni}
+                  </span>
+                ) : null}
+              </Box>
+            </Box>
+
+            {/* Relational info (Guardians/Students) if present */}
+            {selectedUser.linkedGuardians.length > 0 ? (
+              <Box className={classes.detailInfoCard}>
+                <Box className={classes.detailIconCircle}>
+                  <IconUser size={20} />
+                </Box>
+                <Box style={{ flex: 1 }}>
+                  <Text className={classes.detailCardLabel}>TUTORES VINCULADOS</Text>
+                  <Stack gap={4} mt={4}>
                     {selectedUser.linkedGuardians.map((guardian) => (
                       <Box key={guardian.profileId}>
-                        <Text size="sm"><strong>{guardian.fullName}</strong> · {guardian.relationshipType}</Text>
-                        <Text size="sm" c="dimmed">DNI {guardian.dni}{guardian.isPrimary ? " · principal" : ""}</Text>
+                        <Text size="sm" fw={600}>{guardian.fullName} · {guardian.relationshipType}</Text>
+                        <Text size="xs" c="dimmed">DNI {guardian.dni}{guardian.isPrimary ? " · principal" : ""}</Text>
                       </Box>
                     ))}
                   </Stack>
-                </Card>
-              ) : null}
+                </Box>
+              </Box>
+            ) : null}
 
-              {selectedUser.linkedStudents.length > 0 ? (
-                <Card withBorder radius="md" p="md" bg="white">
-                  <Stack gap="sm">
-                    <Text className={classes.infoLabel}>Alumnos vinculados</Text>
+            {selectedUser.linkedStudents.length > 0 ? (
+              <Box className={classes.detailInfoCard}>
+                <Box className={classes.detailIconCircle}>
+                  <IconUser size={20} />
+                </Box>
+                <Box style={{ flex: 1 }}>
+                  <Text className={classes.detailCardLabel}>ALUMNOS VINCULADOS</Text>
+                  <Stack gap={4} mt={4}>
                     {selectedUser.linkedStudents.map((student) => (
                       <Box key={student.profileId}>
-                        <Text size="sm"><strong>{student.fullName}</strong> · {student.relationshipType}</Text>
-                        <Text size="sm" c="dimmed">DNI {student.dni}{student.isPrimary ? " · principal" : ""}</Text>
+                        <Text size="sm" fw={600}>{student.fullName} · {student.relationshipType}</Text>
+                        <Text size="xs" c="dimmed">DNI {student.dni}{student.isPrimary ? " · principal" : ""}</Text>
                       </Box>
                     ))}
                   </Stack>
-                </Card>
-              ) : null}
-
-              {selectedUser.requestLevel || selectedUser.requestContactPhone || selectedUser.requestResponsibleType ? (
-                <Card withBorder radius="md" p="md" bg="white">
-                  <Stack gap="sm">
-                    <Text className={classes.infoLabel}>Ficha del alumno</Text>
-                    {selectedUser.requestLevel ? (
-                      <Text size="sm">Nivel: <strong>{selectedUser.requestLevel}</strong></Text>
-                    ) : null}
-                    {selectedUser.requestContactPhone ? (
-                      <Text size="sm">Teléfono: <strong>{selectedUser.requestContactPhone}</strong></Text>
-                    ) : null}
-                    {selectedUser.requestResponsibleType === "tutor" ? (
-                      <Stack gap={4}>
-                        <Text size="sm">Tutor: <strong>{selectedUser.requestTutorFullName || "Sin dato"}</strong></Text>
-                        {selectedUser.requestTutorDni ? (
-                          <Text size="sm" c="dimmed">DNI del tutor: <strong>{selectedUser.requestTutorDni}</strong></Text>
-                        ) : null}
-                      </Stack>
-                    ) : null}
-                    {selectedUser.requestResponsibleType === "parents" ? (
-                      <Stack gap={4}>
-                        <Text size="sm">Padre: <strong>{selectedUser.requestFatherFullName || "Sin dato"}</strong></Text>
-                        {selectedUser.requestFatherDni ? (
-                          <Text size="sm" c="dimmed">DNI del padre: <strong>{selectedUser.requestFatherDni}</strong></Text>
-                        ) : null}
-                        <Text size="sm">Madre: <strong>{selectedUser.requestMotherFullName || "Sin dato"}</strong></Text>
-                        {selectedUser.requestMotherDni ? (
-                          <Text size="sm" c="dimmed">DNI de la madre: <strong>{selectedUser.requestMotherDni}</strong></Text>
-                        ) : null}
-                      </Stack>
-                    ) : null}
-                  </Stack>
-                </Card>
-              ) : null}
-            </Stack>
-          </Card>
+                </Box>
+              </Box>
+            ) : null}
+          </Stack>
         ) : null}
-        <Stack gap="sm" mt="lg">
-          <CTAButton type="button" ctaVariant="secondary" onClick={handleCloseUserView} fullWidth>
-            Cerrar
-          </CTAButton>
-        </Stack>
       </Drawer>
 
       <Drawer
@@ -833,34 +945,70 @@ export default function AdminUsersFeature({
           </Card>
         ) : null}
 
-        <AdminSectionCard
-          compact
-          overlayVisible={isLoading && users.length > 0}
-        >
-          <Grid gutter="md" mb="md" align="end" className={classes.filtersGrid}>
-            <GridCol span={{ base: 12, md: lockedRoleFilter ? 12 : 6 }}>
-              <TextInput
-                label="Buscar"
-                placeholder="Nombre o email"
-                value={search}
-                onChange={(event) => setSearch(event.currentTarget.value)}
-                leftSection={<IconSearch size={16} />}
-              />
-            </GridCol>
-            {!lockedRoleFilter ? (
-              <GridCol span={{ base: 12, md: 6 }}>
-                <Select
-                  label="Rol"
-                  placeholder="Todos"
-                  data={USER_ROLE_OPTIONS}
-                  value={roleFilter}
-                  onChange={(value) => setRoleFilter((value as AppUserRole | null) ?? null)}
-                  clearable
-                />
-              </GridCol>
-            ) : null}
-          </Grid>
+        {/* Page Top Header with Title, Description, and Actions Dropdown */}
+        <Box className={classes.headerBox}>
+          <Box>
+            <Text className={classes.headerSub}>Gestioná los usuarios del sistema, sus roles y accesos.</Text>
+          </Box>
 
+          <Menu position="bottom-end" shadow="sm">
+            <Menu.Target>
+              <Button
+                variant="default"
+                radius="md"
+                rightSection={<IconChevronDown size={14} />}
+                style={{ color: "#2563eb", borderColor: "#e2e8f0", fontWeight: 600 }}
+              >
+                Acciones
+              </Button>
+            </Menu.Target>
+            <Menu.Dropdown>
+              <Menu.Item leftSection={<IconPlus size={16} />} onClick={() => setCreateModalOpened(true)}>
+                Nuevo usuario
+              </Menu.Item>
+              <Menu.Item leftSection={<IconRefresh size={16} />} onClick={() => void loadUsers()}>
+                Actualizar lista
+              </Menu.Item>
+            </Menu.Dropdown>
+          </Menu>
+        </Box>
+
+        {/* Filter and Actions Bar */}
+        <Box className={classes.filterRow}>
+          <TextInput
+            placeholder="Nombre o email..."
+            value={search}
+            onChange={(event) => setSearch(event.currentTarget.value)}
+            leftSection={<IconSearch size={16} color="#94a3b8" />}
+            className={classes.searchInput}
+          />
+
+          {!lockedRoleFilter ? (
+            <Select
+              placeholder="Rol: Todos"
+              data={[
+                { value: "", label: "Todos los roles" },
+                ...USER_ROLE_OPTIONS,
+              ]}
+              value={roleFilter ?? ""}
+              onChange={(value) => setRoleFilter(value ? (value as AppUserRole) : null)}
+              leftSection={<IconUsers size={16} color="#94a3b8" />}
+              className={classes.roleSelect}
+              clearable
+            />
+          ) : null}
+
+          <Button
+            className={classes.createBtn}
+            leftSection={<IconPlus size={16} />}
+            onClick={() => setCreateModalOpened(true)}
+          >
+            Nuevo usuario
+          </Button>
+        </Box>
+
+        {/* Main Data Table Card */}
+        <Box className={classes.tableCard}>
           <ResponsiveDataTable
             data={filteredUsers}
             columns={userTableColumns}
@@ -868,7 +1016,25 @@ export default function AdminUsersFeature({
             emptyMessage={emptyUsersMessage}
             loading={isLoading}
           />
-        </AdminSectionCard>
+
+          <Box className={classes.tableFooter}>
+            <Text size="sm" c="dimmed">
+              Mostrando {filteredUsers.length} de {users.length} usuarios
+            </Text>
+
+            <Group gap={6}>
+              <button type="button" className={classes.paginationBtn} aria-label="Página anterior" disabled>
+                <IconChevronLeft size={16} />
+              </button>
+              <button type="button" className={`${classes.paginationBtn} ${classes.paginationBtnActive}`}>
+                1
+              </button>
+              <button type="button" className={classes.paginationBtn} aria-label="Página siguiente" disabled>
+                <IconChevronRight size={16} />
+              </button>
+            </Group>
+          </Box>
+        </Box>
       </Stack>
     </>
   );
