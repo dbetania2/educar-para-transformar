@@ -32,6 +32,7 @@ export type AdminCourse = {
 
 export type CourseFormValues = {
   name: string;
+  level: string;
   subjectName: string;
   academicTermName: string;
   academicTermYear: string;
@@ -43,12 +44,19 @@ export type CourseFormValues = {
   status: CourseStatus;
 };
 
+
 export type CoursesResponsePayload = {
   error?: string;
   courses?: AdminCourse[];
   teachers?: AdminCourseParticipant[];
   students?: AdminCourseParticipant[];
+  subjects?: string[];
+  academicTerms?: Array<{ name: string; year: number }>;
+  classrooms?: string[];
+  schedules?: string[];
 };
+
+
 
 export type CourseMutationResponsePayload = {
   error?: string;

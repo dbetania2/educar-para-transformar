@@ -43,16 +43,19 @@ function isValidPayload(payload: unknown): payload is CoursePayload {
   const candidate = payload as Record<string, unknown>;
   const year = parseYear(candidate.academicTermYear);
   const status = candidate.status ?? "activa";
+  const name = normalizeRequiredText(candidate.name);
+  const subjectName = normalizeRequiredText(candidate.subjectName) || name;
 
   return (
-    normalizeRequiredText(candidate.name).length >= 3 &&
-    normalizeRequiredText(candidate.subjectName).length >= 3 &&
+    name.length >= 3 &&
+    subjectName.length >= 3 &&
     normalizeRequiredText(candidate.academicTermName).length >= 3 &&
     year !== null &&
     COURSE_STATUSES.includes(status as CourseStatus) &&
     (!candidate.studentProfileIds || Array.isArray(candidate.studentProfileIds))
   );
 }
+
 
 function fullName(profile: { first_name: string; last_name: string }) {
   return getProfileFullName(profile) || "Sin nombre";
@@ -169,12 +172,14 @@ async function getParticipants(supabase: AdminSupabaseClient) {
 }
 
 async function getCourses(supabase: AdminSupabaseClient) {
-  const [coursesQuery, enrollmentsQuery, participants] = await Promise.all([
+  const [coursesQuery, enrollmentsQuery, subjectsQuery, termsQuery, participants] = await Promise.all([
     supabase
       .from("courses")
       .select("id, subject_id, academic_term_id, teacher_profile_id, name, commission, classroom, schedule_summary, status, created_at, subjects ( name ), academic_terms ( name, year )")
       .order("created_at", { ascending: false }),
     supabase.from("course_enrollments").select("course_id, student_profile_id, enrollment_status"),
+    supabase.from("subjects").select("id, name").eq("is_active", true).order("name"),
+    supabase.from("academic_terms").select("id, name, year").eq("is_active", true).order("year", { ascending: false }),
     getParticipants(supabase),
   ]);
 
@@ -234,8 +239,23 @@ async function getCourses(supabase: AdminSupabaseClient) {
     };
   });
 
-  return { courses, ...participants };
+  const dbSubjects = ((subjectsQuery.data ?? []) as Array<{ id: number; name: string }>).map((s) => s.name);
+  const dbTerms = ((termsQuery.data ?? []) as Array<{ id: number; name: string; year: number }>).map((t) => ({ name: t.name, year: t.year }));
+  const dbClassrooms = Array.from(new Set(courses.map((c) => c.classroom).filter((c): c is string => Boolean(c))));
+  const dbSchedules = Array.from(new Set(courses.map((c) => c.scheduleSummary).filter((s): s is string => Boolean(s))));
+
+  return {
+    courses,
+    ...participants,
+    subjects: dbSubjects,
+    academicTerms: dbTerms,
+    classrooms: dbClassrooms,
+    schedules: dbSchedules,
+  };
 }
+
+
+
 
 export async function GET() {
   const access = await getAdminClientWithGuard();
@@ -267,8 +287,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Payload inválido para crear curso." }, { status: 400 });
   }
 
-  const subjectName = normalizeRequiredText(body.subjectName);
+  const subjectName = normalizeRequiredText(body.subjectName) || normalizeRequiredText(body.name);
   const termName = normalizeRequiredText(body.academicTermName);
+
   const termYear = parseYear(body.academicTermYear) as number;
   const studentProfileIds = Array.from(new Set(body.studentProfileIds ?? []));
   const teacherProfileId = normalizeOptionalText(body.teacherProfileId);
@@ -359,8 +380,9 @@ export async function PATCH(request: Request) {
   }
 
   const payload = body as CoursePayload;
-  const subjectName = normalizeRequiredText(payload.subjectName);
+  const subjectName = normalizeRequiredText(payload.subjectName) || normalizeRequiredText(payload.name);
   const termName = normalizeRequiredText(payload.academicTermName);
+
   const termYear = parseYear(payload.academicTermYear) as number;
   const studentProfileIds = Array.from(new Set(payload.studentProfileIds ?? []));
   const teacherProfileId = normalizeOptionalText(payload.teacherProfileId);
