@@ -30,6 +30,11 @@ function normalizeRequiredText(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+function isMissingRelationError(error: { code?: string; message?: string } | null | undefined): boolean {
+  if (!error) return false;
+  return error.code === "42P01" || error.code === "PGRST204" || (typeof error.message === "string" && error.message.includes("does not exist"));
+}
+
 function parseYear(value: unknown) {
   const parsed = typeof value === "number" ? value : Number(value);
   return Number.isInteger(parsed) && parsed >= 2000 && parsed <= 2100 ? parsed : null;
@@ -326,7 +331,7 @@ export async function POST(request: Request) {
         .from("course_teachers")
         .insert({ course_id: courseId, teacher_profile_id: teacherProfileId, role_in_course: "titular" });
 
-      if (teacherLink.error && teacherLink.error.code !== "23505") {
+      if (teacherLink.error && teacherLink.error.code !== "23505" && !isMissingRelationError(teacherLink.error)) {
         throw new Error(teacherLink.error.message ?? "No se pudo asignar el docente al curso.");
       }
     }
@@ -413,7 +418,7 @@ export async function PATCH(request: Request) {
 
     const deleteTeacherLinks = await access.supabase.from("course_teachers").delete().eq("course_id", courseId);
 
-    if (deleteTeacherLinks.error) {
+    if (deleteTeacherLinks.error && !isMissingRelationError(deleteTeacherLinks.error)) {
       throw new Error(deleteTeacherLinks.error.message ?? "No se pudo actualizar el docente del curso.");
     }
 
@@ -422,7 +427,7 @@ export async function PATCH(request: Request) {
         .from("course_teachers")
         .insert({ course_id: courseId, teacher_profile_id: teacherProfileId, role_in_course: "titular" });
 
-      if (teacherLink.error && teacherLink.error.code !== "23505") {
+      if (teacherLink.error && teacherLink.error.code !== "23505" && !isMissingRelationError(teacherLink.error)) {
         throw new Error(teacherLink.error.message ?? "No se pudo asignar el docente al curso.");
       }
     }
