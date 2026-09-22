@@ -101,29 +101,30 @@ export default async function TeacherProfilePage({
         <Card withBorder radius="xl" p={{ base: "cardPadSm", md: "cardPadLg" }} bg="white">
           <Stack gap="lg">
             <Stack gap={4}>
-              <Title order={3} c="brand.7">Identidad institucional</Title>
+              <Title order={3} c="brand.7">Datos Personales y Legajo</Title>
               <Text size="sm" c="dimmed">
-                Datos base sincronizados entre autenticación, perfil académico y registro docente.
+                Atributos obligatorios del módulo docente según la especificación del sistema.
               </Text>
             </Stack>
 
             <ProfileInfoTable
               items={[{
-                label: "Nombre",
-                value: context.displayName,
-                hint: "Nombre mostrado actualmente dentro del campus docente.",
+                label: "Legajo",
+                value: context.teacher?.teacher_code ?? "Sin legajo",
+                hint: "Identificador correlativo único de legajo docente.",
+
               }, {
-                label: "Correo",
-                value: context.profile?.email ?? context.user.email ?? "Sin correo",
-                hint: "Correo principal asociado a la cuenta.",
+                label: "Nombre",
+                value: context.profile?.first_name ?? context.displayName.split(" ")[0] ?? "Sin nombre",
+                hint: "Nombre principal del profesor.",
+              }, {
+                label: "Apellido",
+                value: context.profile?.last_name ?? context.displayName.split(" ").slice(1).join(" ") ?? "Sin apellido",
+                hint: "Apellido completo del profesor.",
               }, {
                 label: "DNI",
                 value: context.profile?.dni ?? "Sin DNI",
-                hint: "Documento cargado en la base institucional.",
-              }, {
-                label: "Telefono",
-                value: context.profile?.phone ?? "Sin telefono",
-                hint: "Canal de contacto actualmente sincronizado.",
+                hint: "Documento Nacional de Identidad.",
               }]}
             />
           </Stack>
@@ -132,26 +133,35 @@ export default async function TeacherProfilePage({
         <Card withBorder radius="xl" p={{ base: "cardPadSm", md: "cardPadLg" }} bg="white">
           <Stack gap="lg">
             <Stack gap={4}>
-              <Title order={3} c="brand.7">Estado del registro</Title>
+              <Title order={3} c="brand.7">Contacto, Especialidad y Estado</Title>
               <Text size="sm" c="dimmed">
-                Señales rápidas para validar si el docente quedó completo dentro del circuito institucional.
+                Especialidad acreditada, canales de comunicación y estado activo en la institución.
               </Text>
             </Stack>
 
             <ProfileInfoTable
               items={[{
-                label: "Registro docente",
-                value: adminState,
-                hint: "Confirma si existe una fila vinculada en la tabla de docentes.",
+                label: "Especialidad",
+                value: context.teacher?.title ?? "Docente / Titular",
+                hint: "Área o disciplina académica principal del profesor.",
               }, {
-                label: "Alta",
-                value: formatDate(context.teacher?.hire_date ?? null) ?? "Sin fecha",
-                hint: "Fecha institucional asociada al alta del docente.",
+                label: "Correo",
+                value: context.profile?.email ?? context.user.email ?? "Sin correo",
+                hint: "Correo electrónico institucional.",
+              }, {
+                label: "Telefono",
+                value: context.profile?.phone ?? "Sin teléfono",
+                hint: "Teléfono de contacto directo.",
+              }, {
+                label: "Estado",
+                value: context.teacher ? "Activo" : "Pendiente",
+                hint: "Estado operativo dentro del sistema institucional.",
               }]}
             />
           </Stack>
         </Card>
       </SimpleGrid>
+
     </Stack>
   );
 }
