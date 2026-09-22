@@ -9,6 +9,8 @@ import {
   requireNoDocenteRouteContext,
 } from "@/lib/noDocenteDashboard";
 
+export const dynamic = "force-dynamic";
+
 type NoDocenteRootPageProps = {
   params: Promise<{ slug: string }>;
 };

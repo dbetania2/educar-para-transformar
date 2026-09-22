@@ -9,6 +9,8 @@ import {
   requireTutorRouteContext,
 } from "@/lib/tutorDashboard";
 
+export const dynamic = "force-dynamic";
+
 type TutorRootPageProps = {
   params: Promise<{ slug: string }>;
 };

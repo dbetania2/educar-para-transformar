@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 
 import { formatTeacherSectionPath, requireTeacherRouteContext } from "@/lib/teacherDashboard";
 
+export const dynamic = "force-dynamic";
+
 type TeacherRootPageProps = {
   params: Promise<{
     slug: string;

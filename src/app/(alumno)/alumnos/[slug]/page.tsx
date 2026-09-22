@@ -14,6 +14,8 @@ import {
   requireStudentRouteContext,
 } from "@/lib/studentDashboard";
 
+export const dynamic = "force-dynamic";
+
 type StudentRootPageProps = {
   params: Promise<{
     slug: string;
