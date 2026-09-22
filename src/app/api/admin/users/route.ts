@@ -445,6 +445,12 @@ export async function GET() {
           role,
         });
 
+        const isActive =
+          profile?.is_active !== false &&
+          user.user_metadata?.is_active !== false &&
+          user.user_metadata?.status !== "inactivo";
+        const status = isActive ? "activo" : "inactivo";
+
         return {
           id: user.id,
           email: user.email ?? "",
@@ -453,6 +459,8 @@ export async function GET() {
           role,
           createdAt: user.created_at,
           lastSignInAt: user.last_sign_in_at,
+          status,
+          isActive,
         };
       }),
   );

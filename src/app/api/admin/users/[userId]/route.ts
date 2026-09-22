@@ -839,7 +839,7 @@ export async function DELETE(
     actorProfileId: actorProfile?.id ?? null,
     entityName: "auth_user",
     entityId: userId,
-    action: "user_deleted",
+    action: "user_deactivated",
     oldData: {
       id: userResult.user.id,
       email: userResult.user.email ?? null,
@@ -847,32 +847,47 @@ export async function DELETE(
       legajo: getLegajoFromUser(userResult.user),
       profile_id: profile?.id ?? null,
       full_name: getProfileFullName(profile) || userResult.user.user_metadata?.full_name || null,
+      status: "activo",
     },
-    newData: { reason },
+    newData: { reason, status: "inactivo" },
   });
 
   if (profile?.id) {
-    const { error: deleteProfileError } = await supabase
+    const { error: updateProfileError } = await supabase
       .from("profiles")
-      .delete()
+      .update({ is_active: false })
       .eq("id", profile.id);
 
-    if (deleteProfileError) {
+    if (updateProfileError) {
       return NextResponse.json(
-        { error: deleteProfileError.message ?? "No se pudo eliminar el perfil relacional del usuario." },
+        { error: updateProfileError.message ?? "No se pudo desactivar el perfil relacional del usuario." },
         { status: 500 },
       );
     }
+
+    await supabase
+      .from("students")
+      .update({ current_status: "inactivo" })
+      .eq("profile_id", profile.id);
   }
 
-  const { error: deleteUserError } = await supabase.auth.admin.deleteUser(userId);
+  const { error: updateAuthError } = await supabase.auth.admin.updateUserById(userId, {
+    user_metadata: {
+      ...(userResult.user.user_metadata || {}),
+      status: "inactivo",
+      is_active: false,
+      deactivation_reason: reason,
+      deactivated_at: new Date().toISOString(),
+    },
+    ban_duration: "876000h",
+  });
 
-  if (deleteUserError) {
+  if (updateAuthError) {
     return NextResponse.json(
-      { error: deleteUserError.message ?? "No se pudo eliminar el usuario Auth." },
+      { error: updateAuthError.message ?? "No se pudo desactivar el usuario en Autenticación." },
       { status: 500 },
     );
   }
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, status: "inactivo" });
 }

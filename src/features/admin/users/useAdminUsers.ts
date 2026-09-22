@@ -531,12 +531,18 @@ export function useAdminUsers({
     }
 
     notifications.show({
-      title: "Usuario eliminado",
-      message: `Se eliminó ${selectedUser.fullName || selectedUser.email}.`,
-      color: "green",
+      title: "Usuario dado de baja",
+      message: `Se desactivó ${selectedUser.fullName || selectedUser.email}.`,
+      color: "orange",
     });
 
-    setUsers((current) => current.filter((user) => user.id !== selectedUser.id));
+    setUsers((current) =>
+      current.map((user) =>
+        user.id === selectedUser.id
+          ? { ...user, status: "inactivo", isActive: false }
+          : user,
+      ),
+    );
     handleCloseDeleteUser();
   };
 

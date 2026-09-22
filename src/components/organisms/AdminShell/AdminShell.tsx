@@ -35,14 +35,14 @@ const adminNavigation = [
     icon: IconUsers,
   },
   {
-    href: "/admin/roles",
-    label: "Roles",
-    icon: IconShield,
+    href: "/admin/cursos",
+    label: "Cursos",
+    icon: IconBook2,
   },
   {
-    href: "/admin/permisos",
-    label: "Permisos",
-    icon: IconKey,
+    href: "/admin/noticias",
+    label: "Noticias",
+    icon: IconNews,
   },
   {
     href: "/admin/reportes",
@@ -53,16 +53,6 @@ const adminNavigation = [
     href: "/admin/configuracion",
     label: "Configuración",
     icon: IconSettings,
-  },
-  {
-    href: "/admin/cursos",
-    label: "Cursos",
-    icon: IconBook2,
-  },
-  {
-    href: "/admin/noticias",
-    label: "Noticias",
-    icon: IconNews,
   },
 ];
 

@@ -10,6 +10,8 @@ export type AdminUser = {
   role: AppUserRole | "desconocido";
   createdAt: string | null;
   lastSignInAt: string | null;
+  status?: "activo" | "inactivo";
+  isActive?: boolean;
 };
 
 export type AdminGuardianLink = {

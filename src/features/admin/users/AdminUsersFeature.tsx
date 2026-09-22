@@ -255,6 +255,26 @@ export default function AdminUsersFeature({
       render: (user) => renderRoleBadge(user.role, classes),
     },
     {
+      key: "status",
+      header: <Text className={classes.tableHeader}>ESTADO</Text>,
+      mobileMinWidth: 130,
+      noWrap: true,
+      render: (user) => {
+        const isInactive = user.status === "inactivo" || user.isActive === false;
+        return (
+          <Badge
+            variant="light"
+            color={isInactive ? "red" : "green"}
+            radius="sm"
+            size="sm"
+            style={{ fontWeight: 600, textTransform: "uppercase" }}
+          >
+            {isInactive ? "Inactivo" : "Activo"}
+          </Badge>
+        );
+      },
+    },
+    {
       key: "created",
       header: <Text className={classes.tableHeader}>ALTA</Text>,
       mobileMinWidth: 180,

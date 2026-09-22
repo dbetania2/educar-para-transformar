@@ -12,6 +12,7 @@ export type BasicProfile = {
   dni: string;
   email: string | null;
   phone: string | null;
+  is_active?: boolean | null;
 };
 
 function normalizeDni(dni: string) {
