@@ -35,7 +35,9 @@ type TeacherRecord = {
   profile_id: string;
   teacher_code: string;
   hire_date: string | null;
+  title: string | null;
 };
+
 
 export type TeacherCourseRecord = {
   id: number;
@@ -257,9 +259,10 @@ async function getTeacherProfileByAuthUserId(
 async function getTeacherRecordByProfileId(supabase: SupabaseDbClient, profileId: string) {
   const query = await supabase
     .from("teachers")
-    .select("profile_id, teacher_code, hire_date")
+    .select("profile_id, teacher_code, hire_date, title")
     .eq("profile_id", profileId)
     .maybeSingle();
+
 
   if (query.error && !isNoRowsError(query.error)) {
     failOnUnexpectedQueryError(query.error, "No se pudo obtener el registro del docente.");
@@ -568,31 +571,7 @@ export async function getTeacherCourseAttendance(slug: string, courseId: number)
 
 export async function getTeacherCourseMaterials(slug: string, courseId: number) {
   const course = await getTeacherCourse(slug, courseId);
-
-  if (!course) {
-    return { course: null, materials: [] as TeacherCourseMaterialRecord[] };
-  }
-
-  const supabase = createAdminClient();
-  const query = await supabase
-    .from("course_materials")
-    .select("id, title, description, resource_url, material_type, created_at")
-    .eq("course_id", courseId)
-    .order("created_at", { ascending: false });
-
-  if (isMissingRelationError(query.error)) {
-    return {
-      course,
-      materials: [] as TeacherCourseMaterialRecord[],
-    };
-  }
-
-  failOnUnexpectedQueryError(query.error, "No se pudieron obtener los materiales del curso.");
-
-  return {
-    course,
-    materials: (query.data ?? []) as TeacherCourseMaterialRecord[],
-  };
+  return { course, materials: [] as TeacherCourseMaterialRecord[] };
 }
 
 

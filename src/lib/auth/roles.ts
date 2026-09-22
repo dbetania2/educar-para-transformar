@@ -8,10 +8,10 @@ export const USER_ROLE_OPTIONS = [
 
 export type AppUserRole = (typeof USER_ROLE_OPTIONS)[number]["value"];
 export type StudentSection = "cursos" | "perfil";
-export type StudentCourseSection = "notas" | "asistencias" | "materiales";
+export type StudentCourseSection = "notas" | "asistencias";
 export const STUDENT_ACCESS_PATH = "/alumnos";
 export type TeacherSection = "cursos" | "perfil" | "mensajes";
-export type TeacherCourseSection = "calificaciones" | "asistencias" | "materiales";
+export type TeacherCourseSection = "calificaciones" | "asistencias";
 export const TEACHER_ACCESS_PATH = "/docentes";
 export type TutorSection = "hijos";
 export const TUTOR_ACCESS_PATH = "/tutores";

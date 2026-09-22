@@ -614,9 +614,8 @@ export async function getStudentAttendance(slug: string): Promise<DashboardQuery
 }
 
 export async function getStudentCourseMaterials(
-  slug: string,
-  courseId: number,
+  _slug: string,
+  _courseId: number,
 ): Promise<DashboardQueryResult<StudentCourseMaterialRecord[]>> {
-  const context = await requireStudentRouteContext(slug);
-  return getRelationalStudentCourseMaterials(context.user.id, courseId, context.user.legajo);
+  return { data: [], migrationRequired: false };
 }

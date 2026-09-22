@@ -5,15 +5,14 @@ import { requireTeacherCourseAccess } from "@/lib/teacherCourseAccess";
 type AttendancePayload = {
   sessionId?: number;
   sessionDate?: string;
-  topic?: string | null;
   records?: Array<{
     studentProfileId: string;
-    status: "presente" | "ausente" | "justificada" | "tarde";
+    status: "presente" | "ausente" | "tarde";
     notes?: string | null;
   }>;
 };
 
-const STATUSES = new Set(["presente", "ausente", "justificada", "tarde"]);
+const STATUSES = new Set(["presente", "ausente", "tarde"]);
 function text(value: unknown) {
   return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
 }
@@ -27,8 +26,8 @@ export async function POST(request: Request, context: { params: Promise<{ course
   const sessionDate = text(body?.sessionDate) ?? new Date().toISOString().slice(0, 10);
 
   const session = body?.sessionId
-    ? await access.supabase.from("class_sessions").update({ session_date: sessionDate, topic: text(body.topic), created_by: access.teacherProfileId }).eq("id", body.sessionId).eq("course_id", access.courseId).select("id").single()
-    : await access.supabase.from("class_sessions").insert({ course_id: access.courseId, session_date: sessionDate, topic: text(body?.topic), created_by: access.teacherProfileId }).select("id").single();
+    ? await access.supabase.from("class_sessions").update({ session_date: sessionDate, created_by: access.teacherProfileId }).eq("id", body.sessionId).eq("course_id", access.courseId).select("id").single()
+    : await access.supabase.from("class_sessions").insert({ course_id: access.courseId, session_date: sessionDate, created_by: access.teacherProfileId }).select("id").single();
 
   if (session.error) return NextResponse.json({ error: session.error.message }, { status: 500 });
 

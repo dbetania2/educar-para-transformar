@@ -338,7 +338,7 @@ export async function getTutorStudentCourseReport(
   if (!coursesResult.student || !course) return null;
 
   const supabase = createAdminClient();
-  const [assessmentsQuery, sessionsQuery, materialsQuery] = await Promise.all([
+  const [assessmentsQuery, sessionsQuery] = await Promise.all([
     supabase
       .from("assessments")
       .select("id, title, evaluation_type, max_score, evaluated_at, grades ( student_profile_id, score, approved, teacher_comment )")
@@ -346,21 +346,13 @@ export async function getTutorStudentCourseReport(
       .order("evaluated_at", { ascending: false, nullsFirst: false }),
     supabase
       .from("class_sessions")
-      .select("id, session_date, topic, attendance_records ( student_profile_id, status, notes )")
+      .select("id, session_date, attendance_records ( student_profile_id, status, notes )")
       .eq("course_id", courseId)
       .order("session_date", { ascending: false }),
-    supabase
-      .from("course_materials")
-      .select("id, title, description, resource_url, material_type, created_at")
-      .eq("course_id", courseId)
-      .order("created_at", { ascending: false }),
   ]);
 
   failOnUnexpectedQueryError(assessmentsQuery.error, "No se pudieron obtener las notas del alumno.");
   failOnUnexpectedQueryError(sessionsQuery.error, "No se pudieron obtener las asistencias del alumno.");
-  if (!isMissingRelationError(materialsQuery.error)) {
-    failOnUnexpectedQueryError(materialsQuery.error, "No se pudieron obtener los materiales del curso.");
-  }
 
   const grades = ((assessmentsQuery.data ?? []) as Array<{
     id: number;
@@ -404,7 +396,7 @@ export async function getTutorStudentCourseReport(
     course,
     grades,
     attendance,
-    materials: isMissingRelationError(materialsQuery.error) ? [] : (materialsQuery.data ?? []) as TutorCourseMaterialRecord[],
+    materials: [],
     submissions: [],
   };
 }

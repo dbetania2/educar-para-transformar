@@ -142,7 +142,6 @@ export default async function TeacherStudentReportPage({
               <TableThead>
                 <TableTr>
                   <TableTh>Fecha</TableTh>
-                  <TableTh>Tema</TableTh>
                   <TableTh>Estado</TableTh>
                   <TableTh>Observación</TableTh>
                 </TableTr>
@@ -151,12 +150,11 @@ export default async function TeacherStudentReportPage({
                 {report.attendance.length > 0 ? report.attendance.map((record) => (
                   <TableTr key={record.session_id}>
                     <TableTd>{formatDate(record.session_date) ?? record.session_date}</TableTd>
-                    <TableTd>{record.topic ?? "Sin tema"}</TableTd>
                     <TableTd><AttendanceStatusBadge status={record.status} /></TableTd>
                     <TableTd>{record.notes?.trim() || "Sin observación"}</TableTd>
                   </TableTr>
                 )) : (
-                  <TableTr><TableTd colSpan={4}>Todavía no hay clases cargadas.</TableTd></TableTr>
+                  <TableTr><TableTd colSpan={3}>Todavía no hay clases cargadas.</TableTd></TableTr>
                 )}
               </TableTbody>
             </Table>

@@ -13,18 +13,17 @@ import type { TeacherAttendanceSessionRecord, TeacherCourseStudentRecord } from 
 
 type Props = { courseId: number; sessions: TeacherAttendanceSessionRecord[]; students: TeacherCourseStudentRecord[] };
 type Draft = { studentProfileId: string; status: "presente" | "ausente" | "justificada" | "tarde"; notes: string };
-type AttendanceForm = { sessionId?: number; sessionDate: string; topic: string };
+type AttendanceForm = { sessionId?: number; sessionDate: string };
 
 function getTodayInputDate() {
   return new Date().toISOString().slice(0, 10);
 }
 
-const emptyForm: AttendanceForm = { sessionDate: getTodayInputDate(), topic: "" };
+const emptyForm: AttendanceForm = { sessionDate: getTodayInputDate() };
 
 const attendanceStatusOptions = [
   { value: "presente", label: "Presente" },
   { value: "ausente", label: "Ausente" },
-  { value: "justificada", label: "Justificada" },
   { value: "tarde", label: "Tarde" },
 ];
 
@@ -48,13 +47,13 @@ export default function TeacherCourseAttendanceManager({ courseId, sessions, stu
   const buildDefaultRecords = () => students.map((student) => ({ studentProfileId: student.profile_id, status: "presente" as const, notes: "" }));
 
   const openNewAttendance = () => {
-    setForm({ ...emptyForm, sessionDate: getTodayInputDate() });
+    setForm({ sessionDate: getTodayInputDate() });
     setRecords(buildDefaultRecords());
     setOpened(true);
   };
 
   const openEditAttendance = (session: TeacherAttendanceSessionRecord) => {
-    setForm({ sessionId: session.id, sessionDate: session.session_date.slice(0, 10), topic: session.topic ?? "" });
+    setForm({ sessionId: session.id, sessionDate: session.session_date.slice(0, 10) });
     setRecords(students.map((student) => {
       const existing = session.records.find((record) => record.student_profile_id === student.profile_id);
       return {
@@ -68,7 +67,7 @@ export default function TeacherCourseAttendanceManager({ courseId, sessions, stu
 
   const closeDrawer = () => {
     setOpened(false);
-    setForm({ ...emptyForm, sessionDate: getTodayInputDate() });
+    setForm({ sessionDate: getTodayInputDate() });
     setRecords([]);
   };
 
@@ -95,12 +94,6 @@ export default function TeacherCourseAttendanceManager({ courseId, sessions, stu
       mobileMinWidth: 140,
       noWrap: true,
       render: (session) => <Text fw={700} c="brand.7">{formatDate(session.session_date)}</Text>,
-    },
-    {
-      key: "topic",
-      header: <Text fw={700}>Tema</Text>,
-      mobileMinWidth: 260,
-      render: (session) => <Text size="sm" c={session.topic ? undefined : "dimmed"}>{session.topic || "Sin tema cargado"}</Text>,
     },
     {
       key: "records",
@@ -185,7 +178,6 @@ export default function TeacherCourseAttendanceManager({ courseId, sessions, stu
             value={form.sessionDate}
             onChange={(event) => setForm({ ...form, sessionDate: event.currentTarget.value })}
           />
-          <TextInput label="Tema" value={form.topic} onChange={(event) => setForm({ ...form, topic: event.currentTarget.value })} />
           <Table.ScrollContainer minWidth={560}>
             <Table striped highlightOnHover verticalSpacing="sm">
               <Table.Thead>
