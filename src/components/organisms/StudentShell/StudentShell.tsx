@@ -19,6 +19,8 @@ import {
 import RoleDashboardShell, {
   type RoleDashboardNavigationItem,
 } from "@/components/organisms/RoleDashboardShell/RoleDashboardShell";
+import NotificationsBell from "@/components/organisms/NotificationsBell";
+
 
 import { useStyles } from "./StudentShell.style";
 
@@ -110,6 +112,29 @@ export default function StudentShell({
     </Box>
   );
 
+  const studentNotifications = [
+    {
+      id: "st-1",
+      title: "Nueva publicación de materia",
+      description: "Se publicaron los ejercicios de repaso para Matemática - 1 Primaria A.",
+      created_at: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
+      read_at: null,
+      type: "news" as const,
+      category: "Académico",
+      href: getStudentSectionPathBySlug(studentSlug, "cursos"),
+    },
+    {
+      id: "st-2",
+      title: "Jornada de Integración Digital",
+      description: "Revisá las últimas novedades sobre los talleres de robótica y tecnología.",
+      created_at: new Date(Date.now() - 1000 * 60 * 240).toISOString(),
+      read_at: null,
+      type: "news" as const,
+      category: "Novedad Institucional",
+      href: "/novedades",
+    },
+  ];
+
   return (
     <RoleDashboardShell
       title="Campus Alumno"
@@ -117,6 +142,7 @@ export default function StudentShell({
       menuAriaLabel="Abrir navegación del alumno"
       navigation={navigation}
       footer={footer}
+      topBarSlot={<NotificationsBell notifications={studentNotifications} roleTitle="Alumno" />}
       logoutAction={{
         label: "Cerrar sesión",
         confirmLabel: "Sí, cerrar sesión",
@@ -129,3 +155,4 @@ export default function StudentShell({
     </RoleDashboardShell>
   );
 }
+

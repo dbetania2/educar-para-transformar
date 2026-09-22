@@ -13,6 +13,9 @@ import {
 
 import { PaddingContainer } from "@/components/atoms";
 import RoleDashboardShell from "@/components/organisms/RoleDashboardShell/RoleDashboardShell";
+import NotificationsBell from "@/components/organisms/NotificationsBell";
+
+
 import {
   getNoDocenteHomePathBySlug,
   getNoDocenteSectionPathBySlug,
@@ -97,6 +100,30 @@ export default function NoDocenteShell({
     </Box>
   );
 
+  const noDocenteNotifications = [
+    {
+      id: "nd-1",
+      title: "Nueva tarea administrativa",
+      description: "Validar solicitud pendiente y documentación inicial del postulante Bruno Demo.",
+      created_at: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
+      read_at: null,
+      type: "task" as const,
+      category: "Tarea Pendiente",
+      href: getNoDocenteSectionPathBySlug(noDocenteSlug, "pendientes"),
+    },
+    {
+      id: "nd-2",
+      title: "Consulta por vacantes",
+      description: "Nueva pregunta sobre trámite de inscripción en mesa de entrada.",
+      created_at: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
+      read_at: null,
+      type: "message" as const,
+      category: "Mesa de Entrada",
+      href: getNoDocenteSectionPathBySlug(noDocenteSlug, "mensajes"),
+    },
+  ];
+
+
   return (
     <RoleDashboardShell
       title="Campus No Docente"
@@ -104,6 +131,7 @@ export default function NoDocenteShell({
       menuAriaLabel="Abrir navegación no docente"
       navigation={navigation}
       footer={footer}
+      topBarSlot={<NotificationsBell notifications={noDocenteNotifications} roleTitle="No Docente" />}
       logoutAction={{
         label: "Cerrar sesión",
         confirmLabel: "Sí, cerrar sesión",
@@ -116,3 +144,4 @@ export default function NoDocenteShell({
     </RoleDashboardShell>
   );
 }
+

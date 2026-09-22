@@ -23,6 +23,7 @@ import { IconBell, IconBox, IconChevronDown, type Icon, type IconLogout } from "
 
 import { AdminDrawerItem, CTAButton, PaddingContainer } from "@/components/atoms";
 import { ActionsMenu, type ActionsMenuItem } from "@/components/molecules";
+import NotificationsBell from "@/components/organisms/NotificationsBell";
 
 import { useStyles } from "./RoleDashboardShell.style";
 
@@ -293,12 +294,8 @@ export default function RoleDashboardShell({
               </Group>
 
               <Group gap="md" wrap="nowrap" align="center">
-                {topBarSlot}
-                <Indicator color="red" size={8} offset={4} processing>
-                  <ActionIcon variant="subtle" color="gray" size="lg" radius="xl" aria-label="Notificaciones">
-                    <IconBell size={20} stroke={1.8} />
-                  </ActionIcon>
-                </Indicator>
+                {topBarSlot ?? <NotificationsBell roleTitle={title} />}
+
 
                 <Menu position="bottom-end" shadow="md" width={200}>
                   <Menu.Target>

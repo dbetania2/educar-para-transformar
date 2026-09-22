@@ -13,6 +13,8 @@ import { PaddingContainer } from "@/components/atoms";
 import RoleDashboardShell, {
   type RoleDashboardNavigationItem,
 } from "@/components/organisms/RoleDashboardShell/RoleDashboardShell";
+import NotificationsBell from "@/components/organisms/NotificationsBell";
+
 import {
   getTutorHomePathBySlug,
   getTutorSectionPathBySlug,
@@ -103,6 +105,30 @@ export default function TutorShell({
     </Box>
   );
 
+  const tutorNotifications = [
+    {
+      id: "tut-1",
+      title: "Respuesta de docente",
+      description: "Mariana Pereyra respondió tu consulta sobre el desempeño de Sofía Acosta.",
+      created_at: new Date(Date.now() - 1000 * 60 * 90).toISOString(),
+      read_at: null,
+      type: "message" as const,
+      category: "Mensaje Docente",
+      href: getTutorSectionPathBySlug(tutorSlug, "hijos"),
+    },
+    {
+      id: "tut-2",
+      title: "Boletín de novedades mensuales",
+      description: "Ya se encuentran disponibles las fechas de reuniones de padres y evaluaciones.",
+      created_at: new Date(Date.now() - 1000 * 60 * 300).toISOString(),
+      read_at: null,
+      type: "news" as const,
+      category: "Comunicado Escolar",
+      href: "/novedades",
+    },
+  ];
+
+
   return (
     <RoleDashboardShell
       title="Campus Tutor"
@@ -110,6 +136,7 @@ export default function TutorShell({
       menuAriaLabel="Abrir navegación del tutor"
       navigation={navigation}
       footer={footer}
+      topBarSlot={<NotificationsBell notifications={tutorNotifications} roleTitle="Tutor" />}
       logoutAction={{
         label: "Cerrar sesión",
         confirmLabel: "Sí, cerrar sesión",
@@ -122,3 +149,4 @@ export default function TutorShell({
     </RoleDashboardShell>
   );
 }
+

@@ -18,6 +18,8 @@ import {
 } from "@tabler/icons-react";
 
 import RoleDashboardShell from "@/components/organisms/RoleDashboardShell/RoleDashboardShell";
+import NotificationsBell from "@/components/organisms/NotificationsBell";
+
 
 type AdminShellProps = {
   children: React.ReactNode;
@@ -149,6 +151,38 @@ export default function AdminShell({ children }: AdminShellProps) {
     );
   }
 
+  const adminNotifications = [
+    {
+      id: "admin-1",
+      title: "Solicitud de admisión pendiente",
+      description: "Luciana Demo (Nivel Inicial) requiere revisión de documentación.",
+      created_at: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+      read_at: null,
+      type: "request" as const,
+      category: "Solicitud de Ingreso",
+      href: "/admin/solicitudes",
+    },
+    {
+      id: "admin-2",
+      title: "Nueva consulta de contacto",
+      description: "Familia Consulta Demo envió una inquietud sobre vacantes.",
+      created_at: new Date(Date.now() - 1000 * 60 * 180).toISOString(),
+      read_at: null,
+      type: "message" as const,
+      category: "Contacto Web",
+      href: "/admin/solicitudes",
+    },
+    {
+      id: "admin-3",
+      title: "Actualización de sistema",
+      description: "Sincronización de legajos y roles docentes ejecutada correctamente.",
+      created_at: new Date(Date.now() - 1000 * 60 * 600).toISOString(),
+      read_at: new Date().toISOString(),
+      type: "system" as const,
+      category: "Sistema",
+    },
+  ];
+
   return (
     <RoleDashboardShell
       title="Admin"
@@ -156,6 +190,7 @@ export default function AdminShell({ children }: AdminShellProps) {
       menuAriaLabel="Abrir menú administrativo"
       navigation={adminNavigation}
       topBarActions={topBarActions}
+      topBarSlot={<NotificationsBell notifications={adminNotifications} roleTitle="Administración" />}
       logoutAction={{
         label: "Cerrar sesión",
         confirmLabel: "Sí, cerrar sesión",
@@ -168,3 +203,4 @@ export default function AdminShell({ children }: AdminShellProps) {
     </RoleDashboardShell>
   );
 }
+
