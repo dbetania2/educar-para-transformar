@@ -79,7 +79,6 @@ export default async function TeacherCoursesPage({
                       courseHref={formatTeacherCoursePath(context.slug, course.id)}
                       gradesHref={formatTeacherCourseSectionPath(context.slug, course.id, "calificaciones")}
                       attendanceHref={formatTeacherCourseSectionPath(context.slug, course.id, "asistencias")}
-                      materialsHref={formatTeacherCourseSectionPath(context.slug, course.id, "materiales")}
                       coursesHref={formatTeacherSectionPath(context.slug, "cursos")}
                     />
                   </Stack>

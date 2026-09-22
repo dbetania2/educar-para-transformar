@@ -55,7 +55,6 @@ export default async function TeacherCourseDetailPage({
   const coursePath = `${formatTeacherSectionPath(context.slug, "cursos")}/${course.id}`;
   const gradesPath = formatTeacherCourseSectionPath(context.slug, course.id, "calificaciones");
   const attendancePath = formatTeacherCourseSectionPath(context.slug, course.id, "asistencias");
-  const materialsPath = formatTeacherCourseSectionPath(context.slug, course.id, "materiales");
 
   const latestAttendanceByStudent = new Map<string, CourseStudentAttendanceState>(
     studentsResult.students.map((student) => [student.profile_id, { status: "sin_registro", date: null }]),
@@ -93,12 +92,11 @@ export default async function TeacherCourseDetailPage({
           { label: course.course_name },
         ]}
         title={course.course_name}
-        description="Panel operativo del curso para revisar alumnos, calificaciones, asistencias y materiales vinculados."
+        description="Panel operativo del curso para revisar alumnos, calificaciones y asistencias vinculadas."
         action={
           <TeacherCourseActionsMenu
             gradesHref={gradesPath}
             attendanceHref={attendancePath}
-            materialsHref={materialsPath}
             coursesHref={formatTeacherSectionPath(context.slug, "cursos")}
           />
         }

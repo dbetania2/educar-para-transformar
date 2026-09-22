@@ -71,12 +71,11 @@ export default async function StudentCourseDetailPage({
           { label: course.course_name },
         ]}
         title={course.course_name}
-        description="Esta materia concentra su información operativa, notas, asistencias y materiales."
+        description="Esta materia concentra su información operativa, notas y asistencias."
         action={
           <StudentCourseActionsMenu
             gradesHref={formatStudentCourseSectionPath(context.slug, course.id, "notas")}
             attendanceHref={formatStudentCourseSectionPath(context.slug, course.id, "asistencias")}
-            materialsHref={formatStudentCourseSectionPath(context.slug, course.id, "materiales")}
             coursesHref={formatStudentSectionPath(context.slug, "cursos")}
           />
         }

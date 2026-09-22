@@ -13,7 +13,6 @@ type StudentCourseActionsMenuProps = {
   courseHref?: string;
   gradesHref: string;
   attendanceHref: string;
-  materialsHref: string;
   coursesHref: string;
 };
 
@@ -21,7 +20,6 @@ export default function StudentCourseActionsMenu({
   courseHref,
   gradesHref,
   attendanceHref,
-  materialsHref,
   coursesHref,
 }: StudentCourseActionsMenuProps) {
   return (
@@ -50,12 +48,6 @@ export default function StudentCourseActionsMenu({
           label: "Ver asistencias",
           icon: IconSchool,
           href: attendanceHref,
-        },
-        {
-          key: "materials",
-          label: "Ver materiales",
-          icon: IconFileText,
-          href: materialsHref,
         },
         { key: "divider", divider: true },
         {

@@ -15,7 +15,7 @@ import { useStyles } from "@/components/templates/AdminUsersTemplate.style";
 function getRoleDescription(role: string): string {
   if (role === "tutor") return "Puede gestionar y acompañar a los estudiantes a su cargo.";
   if (role === "docente") return "Puede gestionar calificaciones, asistencias y contenidos de sus cursos.";
-  if (role === "alumno") return "Acceso a cursos, calificaciones, materiales y ficha del estudiante.";
+  if (role === "alumno") return "Acceso a cursos, calificaciones y ficha del estudiante.";
   if (role === "administrativo") return "Acceso completo a la gestión del campus y usuarios.";
   if (role === "no_docente") return "Acceso a gestiones operativas y administrativas asignadas.";
   return "Usuario del sistema.";
