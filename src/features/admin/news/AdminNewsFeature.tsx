@@ -28,6 +28,7 @@ export default function AdminNewsFeature() {
     selectedNews,
     form,
     setSearch,
+    openCreateModal,
     openEditModal,
     closeModal,
     saveNews,
@@ -119,7 +120,7 @@ export default function AdminNewsFeature() {
           { label: "Noticias" },
         ]}
         createButtonLabel="Nueva noticia"
-        onCreate={() => openEditModal()}
+        onCreate={() => openCreateModal()}
         searchProps={{
           value: search,
           onChange: setSearch,
