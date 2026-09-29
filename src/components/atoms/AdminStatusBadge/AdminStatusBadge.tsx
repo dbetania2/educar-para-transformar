@@ -36,16 +36,29 @@ export function AdminStatusBadge({ status }: AdminStatusBadgeProps) {
         root: {
           display: "inline-flex",
           alignItems: "center",
-          minHeight: 22,
-          paddingInline: 10,
+          minHeight: 24,
+          paddingInline: 12,
+          fontWeight: 600,
+          textTransform: "none",
         },
         label: {
           color: "inherit",
           overflow: "visible",
           textOverflow: "clip",
           whiteSpace: "nowrap",
-          fontSize: 11,
+          fontSize: 13,
           lineHeight: 1.1,
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+          "&::before": {
+            content: '""',
+            display: "block",
+            width: 6,
+            height: 6,
+            borderRadius: "50%",
+            backgroundColor: "currentColor",
+          }
         },
       }}
     >

@@ -19,7 +19,9 @@ import {
   Text,
   UnstyledButton,
 } from "@mantine/core";
-import { IconBell, IconBox, IconChevronDown, type Icon, type IconLogout } from "@tabler/icons-react";
+import { IconBell, IconChevronDown, type Icon, type IconLogout } from "@tabler/icons-react";
+import Image from "next/image";
+import logo from "@/assets/logo.png";
 
 import { AdminDrawerItem, CTAButton, PaddingContainer } from "@/components/atoms";
 import { ActionsMenu, type ActionsMenuItem } from "@/components/molecules";
@@ -152,7 +154,7 @@ export default function RoleDashboardShell({
       <Box className={classes.desktopSidebar}>
         <Box className={classes.sidebarHeader}>
           <Box className={classes.sidebarLogoBox}>
-            <IconBox size={22} stroke={2.2} />
+            <img src={logo.src} alt="Logo" style={{ width: "48px", height: "48px", objectFit: "contain" }} />
           </Box>
           <Box>
             <Text className={classes.sidebarBrandTitle}>{title}</Text>
@@ -307,9 +309,22 @@ export default function RoleDashboardShell({
                     </UnstyledButton>
                   </Menu.Target>
                   <Menu.Dropdown>
-                    <Menu.Label>Administrador</Menu.Label>
+                    <Menu.Label>{title}</Menu.Label>
                     {resolvedTopBarActions.length > 0 ? (
-                      <ActionsMenu label={topBarActionsLabel} items={resolvedTopBarActions} />
+                      resolvedTopBarActions.map((item) => {
+                        if (item.divider) return <Menu.Divider key={item.key} />;
+                        const ItemIcon = item.icon;
+                        return (
+                          <Menu.Item
+                            key={item.key}
+                            color={item.danger ? "red" : undefined}
+                            leftSection={ItemIcon ? <ItemIcon size={16} /> : undefined}
+                            onClick={item.onClick}
+                          >
+                            {item.label}
+                          </Menu.Item>
+                        );
+                      })
                     ) : (
                       <Menu.Item color="red" leftSection={<logoutAction.icon size={16} />} onClick={() => setLogoutModalOpened(true)}>
                         Cerrar sesión

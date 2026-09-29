@@ -3,10 +3,11 @@ import { createStyles } from "@mantine/emotion";
 export const useStyles = createStyles((theme) => ({
   cell: {
     minWidth: 0,
-    verticalAlign: "top",
+    verticalAlign: "middle",
     overflowWrap: "anywhere",
     wordBreak: "break-word",
-    paddingBlock: theme.spacing.cardPadDenseLg,
+    padding: "16px 20px",
+    borderBottom: "1px solid #f1f5f9",
   },
   noWrap: {
     whiteSpace: "nowrap",
@@ -14,17 +15,27 @@ export const useStyles = createStyles((theme) => ({
   },
   emptyCell: {
     textAlign: "center",
-    color: "var(--mantine-color-dimmed)",
-    paddingBlock: "var(--mantine-spacing-lg)",
+    color: "#94a3b8",
+    paddingBlock: "var(--mantine-spacing-xl)",
   },
   table: {
     backgroundColor: theme.white,
-    overflow: "hidden",
+    borderCollapse: "collapse",
   },
   headCell: {
-    paddingBlock: theme.spacing.cardPadCompactSm,
+    padding: "16px 20px !important",
+    backgroundColor: "#f8fafc !important",
+    color: "#64748b !important",
+    textTransform: "uppercase",
+    fontSize: "11px !important",
+    letterSpacing: "0.08em",
+    fontWeight: "700 !important",
+    borderBottom: "1px solid #e2e8f0 !important",
   },
   row: {
     transition: "background-color 140ms ease",
+    "&:hover": {
+      backgroundColor: "#f8fafc !important",
+    },
   },
 }));

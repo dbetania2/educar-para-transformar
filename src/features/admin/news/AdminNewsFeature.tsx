@@ -5,7 +5,8 @@ import { ActionIcon, Alert, Badge, Button, Card, Drawer, FileInput, Group, Modal
 import { IconAlertCircle, IconEye, IconPencil, IconSearch, IconTrash } from "@tabler/icons-react";
 
 import { CTAButton } from "@/components/atoms";
-import { AdminPageLoader, PageHeader, ResponsiveDataTable, RichTextInput, RichTextViewer, type ResponsiveDataTableColumn } from "@/components/molecules";
+import { AdminPageLoader, ResponsiveDataTable, RichTextInput, RichTextViewer, type ResponsiveDataTableColumn } from "@/components/molecules";
+import { AdminListTemplate } from "@/components/templates/AdminListTemplate/AdminListTemplate";
 import { formatDateTime } from "@/lib/utils/formatDateTime";
 import type { AdminNews } from "./types";
 import { useAdminNews } from "./useAdminNews";
@@ -110,40 +111,35 @@ export default function AdminNewsFeature() {
 
   return (
     <Stack gap="pageGapLg">
-      <PageHeader
-        breadcrumbs={breadcrumbs}
+      <AdminListTemplate
         title="Noticias"
         description="Gestioná las noticias públicas, sus imágenes y la descripción enriquecida."
-      />
-
-      {loadError ? (
-        <Alert variant="filled" color="red" radius="md" icon={<IconAlertCircle size={18} />}>
-          {loadError}
-        </Alert>
-      ) : null}
-
-      <Card withBorder radius="xl" p={{ base: "cardPadSm", md: "cardPadLg" }} bg="white">
-        <Stack gap="lg">
-          <Group justify="space-between" align="flex-end" wrap="wrap">
-            <TextInput
-              label="Buscar"
-              placeholder="Título de la noticia"
-              leftSection={<IconSearch size={16} />}
-              value={search}
-              onChange={(event) => setSearch(event.currentTarget.value)}
-              maw={360}
-              style={{ flex: "1 1 280px" }}
-            />
-          </Group>
-
-          <ResponsiveDataTable
-            data={filteredNews}
-            columns={columns}
-            rowKey={(item) => item.id}
-            emptyMessage="Todavía no hay noticias cargadas."
-          />
-        </Stack>
-      </Card>
+        breadcrumbs={[
+          { label: "Admin", href: "/admin/usuarios" },
+          { label: "Noticias" },
+        ]}
+        createButtonLabel="Nueva noticia"
+        onCreate={() => openEditModal()}
+        searchProps={{
+          value: search,
+          onChange: setSearch,
+          placeholder: "Buscar por título de noticia...",
+        }}
+        statsSlot={
+          loadError ? (
+            <Alert variant="filled" color="red" radius="md" icon={<IconAlertCircle size={18} />}>
+              {loadError}
+            </Alert>
+          ) : null
+        }
+      >
+        <ResponsiveDataTable
+          data={filteredNews}
+          columns={columns}
+          rowKey={(item) => item.id}
+          emptyMessage="Todavía no hay noticias cargadas."
+        />
+      </AdminListTemplate>
 
       <Modal
         opened={Boolean(deleteTarget)}

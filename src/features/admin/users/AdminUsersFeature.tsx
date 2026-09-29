@@ -1,16 +1,17 @@
 "use client";
 
-import { ActionIcon, Alert, Badge, Box, Button, Card, Drawer, Grid, GridCol, Group, Menu, NumberInput, PasswordInput, Select, SimpleGrid, Stack, Text, Textarea, TextInput, Title, Tooltip } from "@mantine/core";
-import { IconAlertCircle, IconAt, IconCalendar, IconChevronDown, IconChevronLeft, IconChevronRight, IconClock, IconCopy, IconCreditCard, IconEye, IconEyeOff, IconId, IconLink, IconPencil, IconPlus, IconRefresh, IconSearch, IconShield, IconShieldCheck, IconShieldPlus, IconTrash, IconUser, IconUsers } from "@tabler/icons-react";
+import { ActionIcon, Alert, Badge, Box, Button, Card, Drawer, Group, NumberInput, PasswordInput, Select, SimpleGrid, Stack, Text, Textarea, TextInput, Title, Tooltip } from "@mantine/core";
+import { IconAlertCircle, IconCalendar, IconChevronLeft, IconChevronRight, IconClock, IconCopy, IconEye, IconEyeOff, IconId, IconLink, IconPencil, IconShieldCheck, IconShieldPlus, IconTrash, IconUser, IconUsers } from "@tabler/icons-react";
 
 import { CTAButton } from "@/components/atoms";
 import { roleUsesLegajo } from "@/lib/auth/legajo";
 import { USER_ROLE_LABELS, USER_ROLE_OPTIONS, type AppUserRole } from "@/lib/auth/roles";
-import { AdminPageLoader, AdminSectionCard, DniNumberInput, PageHeader, ResponsiveDataTable, type ResponsiveDataTableColumn } from "@/components/molecules";
+import { AdminPageLoader, DniNumberInput, ResponsiveDataTable, RoleBadge, type ResponsiveDataTableColumn } from "@/components/molecules";
+import { AdminListTemplate } from "@/components/templates/AdminListTemplate/AdminListTemplate";
 import { useAdminUsers } from "@/features/admin/users/useAdminUsers";
 import type { AdminUser } from "@/features/admin/users/types";
 import { formatDateTime } from "@/lib/utils/formatDateTime";
-import { useStyles } from "@/components/templates/AdminUsersTemplate.style";
+import { useStyles } from "@/components/templates/AdminListTemplate/AdminListTemplate.style";
 
 function getRoleDescription(role: string): string {
   if (role === "tutor") return "Puede gestionar y acompañar a los estudiantes a su cargo.";
@@ -50,41 +51,7 @@ function getUserAvatarBg(role: string, name?: string | null): string {
   return "#2563eb";
 }
 
-function renderRoleBadge(role: string, classes: Record<string, string>) {
-  if (role === "administrativo") {
-    return (
-      <span className={`${classes.roleBadge} ${classes.badgeAdmin}`}>
-        <IconShieldCheck size={14} /> ADMINISTRATIVO
-      </span>
-    );
-  }
-  if (role === "tutor") {
-    return (
-      <span className={`${classes.roleBadge} ${classes.badgeTutor}`}>
-        <IconUser size={14} /> TUTOR
-      </span>
-    );
-  }
-  if (role === "docente") {
-    return (
-      <span className={`${classes.roleBadge} ${classes.badgeDocente}`}>
-        <IconShieldCheck size={14} /> DOCENTE
-      </span>
-    );
-  }
-  if (role === "alumno") {
-    return (
-      <span className={`${classes.roleBadge} ${classes.badgeAlumno}`}>
-        <IconUser size={14} /> ALUMNO
-      </span>
-    );
-  }
-  return (
-    <span className={`${classes.roleBadge} ${classes.badgeNoDocente}`}>
-      <IconUser size={14} /> {USER_ROLE_LABELS[role as AppUserRole] ?? role}
-    </span>
-  );
-}
+
 
 type AdminBreadcrumb = {
   label: string;
@@ -252,7 +219,7 @@ export default function AdminUsersFeature({
       header: <Text className={classes.tableHeader}>ROL</Text>,
       mobileMinWidth: 150,
       noWrap: true,
-      render: (user) => renderRoleBadge(user.role, classes),
+      render: (user) => <RoleBadge role={user.role} />,
     },
     {
       key: "status",
@@ -536,7 +503,7 @@ export default function AdminUsersFeature({
                 </Group>
 
                 <Stack gap="xs" align="flex-end">
-                  {renderRoleBadge(selectedUser.role, classes)}
+                  <RoleBadge role={selectedUser.role} />
                   <span className={classes.statusActiveBadge}>
                     <span className={classes.greenDot} /> Activo
                   </span>
@@ -921,122 +888,79 @@ export default function AdminUsersFeature({
         ) : null}
       </Drawer>
 
-      <Stack gap="pageGapSm" className={classes.page}>
-        <PageHeader title={pageTitle} breadcrumbs={breadcrumbs} />
-
-        {loadError && !requiresBootstrap ? (
-          <Alert variant="filled" color="red" radius="md" icon={<IconAlertCircle size={18} />}>
-            {loadError}
-          </Alert>
-        ) : null}
-
-        {requiresBootstrap && bootstrapStatus?.enabled === false ? (
-          <Alert variant="filled" color="yellow" radius="md" icon={<IconAlertCircle size={18} />}>
-            {bootstrapStatus.lockedReason}
-          </Alert>
-        ) : null}
-
-        {requiresBootstrap ? (
-          <Card withBorder radius="md" p={{ base: "cardPadSm", md: "cardPadLg" }}>
-            <Stack gap="sectionGapLg">
-              <Box>
-                <Group gap="sm" align="center">
-                  <IconShieldPlus size={22} />
-                  <Title order={4} c="brand.7">Bootstrap del primer administrador</Title>
-                </Group>
-                <Text size="sm" c="dimmed" mt={6}>
-                  El panel se habilita cuando exista un usuario con rol administrativo.
-                </Text>
-              </Box>
-
-              <Group justify="space-between" align="flex-end">
-                <Text size="sm" c="dimmed" maw={520}>
-                  Si todavía no existe, podés crearlo desde acá.
-                </Text>
-
-                <Group>
-                  <Button variant="default" onClick={() => void loadUsers()} loading={isLoading}>Revalidar</Button>
-                  <CTAButton type="button" onClick={() => setBootstrapModalOpened(true)} disabled={bootstrapStatus?.enabled === false}>
-                    Crear primer administrador
-                  </CTAButton>
-                </Group>
-              </Group>
-            </Stack>
-          </Card>
-        ) : null}
-
-        {/* Page Top Header with Title, Description, and Actions Dropdown */}
-        <Box className={classes.headerBox}>
-          <Box>
-            <Text className={classes.headerSub}>Gestioná los usuarios del sistema, sus roles y accesos.</Text>
-          </Box>
-
-          <Menu position="bottom-end" shadow="sm">
-            <Menu.Target>
-              <Button
-                variant="default"
-                radius="md"
-                rightSection={<IconChevronDown size={14} />}
-                style={{ color: "#2563eb", borderColor: "#e2e8f0", fontWeight: 600 }}
-              >
-                Acciones
-              </Button>
-            </Menu.Target>
-            <Menu.Dropdown>
-              <Menu.Item leftSection={<IconPlus size={16} />} onClick={() => setCreateModalOpened(true)}>
-                Nuevo usuario
-              </Menu.Item>
-              <Menu.Item leftSection={<IconRefresh size={16} />} onClick={() => void loadUsers()}>
-                Actualizar lista
-              </Menu.Item>
-            </Menu.Dropdown>
-          </Menu>
-        </Box>
-
-        {/* Filter and Actions Bar */}
-        <Box className={classes.filterRow}>
-          <TextInput
-            placeholder="Nombre o email..."
-            value={search}
-            onChange={(event) => setSearch(event.currentTarget.value)}
-            leftSection={<IconSearch size={16} color="#94a3b8" />}
-            className={classes.searchInput}
-          />
-
-          {!lockedRoleFilter ? (
+      <AdminListTemplate
+        title={pageTitle}
+        description="Gestioná los usuarios del sistema, sus roles y accesos."
+        breadcrumbs={[
+          { label: "Admin", href: "/admin/usuarios" },
+          { label: "Usuarios" },
+        ]}
+        createButtonLabel="Nuevo usuario"
+        onCreate={() => setCreateModalOpened(true)}
+        onRefresh={() => void loadUsers()}
+        searchProps={{
+          value: search,
+          onChange: setSearch,
+          placeholder: "Nombre o email...",
+        }}
+        filtersSlot={
+          !lockedRoleFilter ? (
             <Select
               placeholder="Rol: Todos"
-              data={[
-                { value: "", label: "Todos los roles" },
-                ...USER_ROLE_OPTIONS,
-              ]}
+              data={[{ value: "", label: "Todos los roles" }, ...USER_ROLE_OPTIONS]}
               value={roleFilter ?? ""}
               onChange={(value) => setRoleFilter(value ? (value as AppUserRole) : null)}
               leftSection={<IconUsers size={16} color="#94a3b8" />}
               className={classes.roleSelect}
               clearable
             />
-          ) : null}
+          ) : null
+        }
+        statsSlot={
+          <Stack gap="sm">
+            {loadError && !requiresBootstrap ? (
+              <Alert variant="filled" color="red" radius="md" icon={<IconAlertCircle size={18} />}>
+                {loadError}
+              </Alert>
+            ) : null}
 
-          <Button
-            className={classes.createBtn}
-            leftSection={<IconPlus size={16} />}
-            onClick={() => setCreateModalOpened(true)}
-          >
-            Nuevo usuario
-          </Button>
-        </Box>
+            {requiresBootstrap && bootstrapStatus?.enabled === false ? (
+              <Alert variant="filled" color="yellow" radius="md" icon={<IconAlertCircle size={18} />}>
+                {bootstrapStatus.lockedReason}
+              </Alert>
+            ) : null}
 
-        {/* Main Data Table Card */}
-        <Box className={classes.tableCard}>
-          <ResponsiveDataTable
-            data={filteredUsers}
-            columns={userTableColumns}
-            rowKey={(user) => user.id}
-            emptyMessage={emptyUsersMessage}
-            loading={isLoading}
-          />
+            {requiresBootstrap ? (
+              <Card withBorder radius="md" p={{ base: "cardPadSm", md: "cardPadLg" }}>
+                <Stack gap="sectionGapLg">
+                  <Box>
+                    <Group gap="sm" align="center">
+                      <IconShieldPlus size={22} />
+                      <Title order={4} c="brand.7">Bootstrap del primer administrador</Title>
+                    </Group>
+                    <Text size="sm" c="dimmed" mt={6}>
+                      El panel se habilita cuando exista un usuario con rol administrativo.
+                    </Text>
+                  </Box>
 
+                  <Group justify="space-between" align="flex-end">
+                    <Text size="sm" c="dimmed" maw={520}>
+                      Si todavía no existe, podés crearlo desde acá.
+                    </Text>
+
+                    <Group>
+                      <Button variant="default" onClick={() => void loadUsers()} loading={isLoading}>Revalidar</Button>
+                      <CTAButton type="button" onClick={() => setBootstrapModalOpened(true)} disabled={bootstrapStatus?.enabled === false}>
+                        Crear primer administrador
+                      </CTAButton>
+                    </Group>
+                  </Group>
+                </Stack>
+              </Card>
+            ) : null}
+          </Stack>
+        }
+        tableFooterSlot={
           <Box className={classes.tableFooter}>
             <Text size="sm" c="dimmed">
               Mostrando {filteredUsers.length} de {users.length} usuarios
@@ -1054,8 +978,16 @@ export default function AdminUsersFeature({
               </button>
             </Group>
           </Box>
-        </Box>
-      </Stack>
+        }
+      >
+        <ResponsiveDataTable
+          data={filteredUsers}
+          columns={userTableColumns}
+          rowKey={(user) => user.id}
+          emptyMessage={emptyUsersMessage}
+          loading={isLoading}
+        />
+      </AdminListTemplate>
     </>
   );
 }

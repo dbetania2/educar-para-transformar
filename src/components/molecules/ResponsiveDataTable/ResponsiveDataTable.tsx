@@ -1,7 +1,9 @@
 "use client";
 
 import type { ComponentProps, Key, ReactNode } from "react";
-import { Table } from "@mantine/core";
+import { Table, LoadingOverlay, Box, Stack, Text, Loader } from "@mantine/core";
+import Image from "next/image";
+import logo from "@/assets/logo.png";
 import { useMediaQuery } from "@mantine/hooks";
 
 import { useStyles } from "./ResponsiveDataTable.style";
@@ -59,14 +61,42 @@ export function ResponsiveDataTable<T>({
   const { style: tableStyle, ...tablePropsRest } = tableProps ?? {};
 
   const table = (
-    <Table
-      striped
-      highlightOnHover
-      withTableBorder
-      {...tablePropsRest}
-      className={classes.table}
-      style={{ width: "100%", tableLayout: isMobile ? undefined : "auto", ...tableStyle }}
-    >
+    <Box pos="relative" style={{ width: "100%" }}>
+      <LoadingOverlay
+        visible={loading}
+        zIndex={10}
+        overlayProps={{ radius: "sm", blur: 2 }}
+        loaderProps={{
+          children: (
+            <Stack align="center" justify="center" gap="md">
+              <Box style={{ animation: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite" }}>
+                <Image
+                  src={logo}
+                  alt="Cargando..."
+                  width={100}
+                  height={76}
+                  priority
+                  style={{
+                    width: "clamp(70px, 6vw, 100px)",
+                    height: "auto",
+                    objectFit: "contain",
+                  }}
+                />
+              </Box>
+              <Text size="xs" fw={500} c="brand.7" ta="center">
+                Actualizando datos...
+              </Text>
+              <Loader color="brand.7" size="sm" type="dots" />
+            </Stack>
+          ),
+        }}
+      />
+      <Table
+        highlightOnHover
+        {...tablePropsRest}
+        className={classes.table}
+        style={{ width: "100%", tableLayout: isMobile ? undefined : "auto", ...tableStyle }}
+      >
       <Table.Thead>
         <Table.Tr>
           {columns.map((column) => {
@@ -132,6 +162,7 @@ export function ResponsiveDataTable<T>({
         ) : null}
       </Table.Tbody>
     </Table>
+    </Box>
   );
 
   if (!isMobile) {

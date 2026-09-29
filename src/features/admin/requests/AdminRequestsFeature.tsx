@@ -1,10 +1,12 @@
 "use client";
 
-import { ActionIcon, Alert, Badge, Box, Card, Grid, GridCol, Group, Select, SimpleGrid, Stack, Text, TextInput, Textarea } from "@mantine/core";
-import { IconAlertCircle, IconFileDescription, IconSearch, IconTrash } from "@tabler/icons-react";
+import { Avatar, ActionIcon, Alert, Box, Card, Group, Select, SimpleGrid, Stack, Text, Textarea } from "@mantine/core";
+import { IconAlertCircle, IconEye, IconDotsVertical, IconTrash, IconChevronDown } from "@tabler/icons-react";
 
 import { AdminStatusBadge, AppModal } from "@/components/atoms";
-import { AdminPageLoader, AdminSectionCard, PageHeader, ResponsiveDataTable, type ResponsiveDataTableColumn } from "@/components/molecules";
+import { PastelBadge } from "@/components/atoms/PastelBadge/PastelBadge";
+import { AdminPageLoader, ResponsiveDataTable, type ResponsiveDataTableColumn } from "@/components/molecules";
+import { AdminListTemplate } from "@/components/templates/AdminListTemplate/AdminListTemplate";
 import { REQUEST_STATUS_OPTIONS, useAdminRequests } from "@/features/admin/requests/useAdminRequests";
 import type { AdminRequest, RequestStatus } from "@/features/admin/requests/types";
 import { formatDateTime } from "@/lib/utils/formatDateTime";
@@ -76,40 +78,71 @@ export default function AdminRequestsFeature() {
 
   const requestTableColumns: ResponsiveDataTableColumn<AdminRequest>[] = [
     {
-      key: "student",
-      header: <Text className={classes.tableHeader}>Alumno</Text>,
-      mobileMinWidth: 240,
-      render: (request) => (
-        <Stack gap={4}>
-          <Text fw={700} className={classes.recordPrimary}>
-            {request.student_full_name}
-          </Text>
-          <Text size="sm" className={classes.recordSecondary}>
-            {request.email}
-          </Text>
-          <Badge variant="light" color="gray" radius="xl">
-            DNI {request.student_dni}
-          </Badge>
-        </Stack>
+      key: "selection",
+      header: "",
+      mobileMinWidth: 50,
+      render: () => (
+        <Box pl="sm">
+          <input type="checkbox" style={{ width: 16, height: 16, borderRadius: 4, border: "1px solid #cbd5e1", cursor: "pointer", accentColor: "#0ea5e9" }} />
+        </Box>
       ),
     },
     {
+      key: "student",
+      header: "Alumno",
+      mobileMinWidth: 240,
+      render: (request) => {
+        const initials = request.student_full_name
+          .split(" ")
+          .map((n) => n[0])
+          .slice(0, 2)
+          .join("")
+          .toUpperCase();
+        
+        return (
+          <Group gap="sm" wrap="nowrap">
+            <Avatar color="violet" radius="xl" size="md">{initials}</Avatar>
+            <Stack gap={0}>
+              <Text fw={600} size="sm" c="#0f172a">
+                {request.student_full_name}
+              </Text>
+              <Text size="xs" c="#64748b">
+                {request.email}
+              </Text>
+            </Stack>
+          </Group>
+        );
+      },
+    },
+    {
       key: "level",
-      header: <Text className={classes.tableHeader}>Nivel</Text>,
+      header: "Nivel",
       mobileMinWidth: 130,
       noWrap: true,
-      render: (request) => request.level,
+      render: (request) => {
+        let mantineColor = "blue";
+        if (request.level.toLowerCase().includes("inicial")) mantineColor = "blue";
+        else if (request.level.toLowerCase().includes("intermedio") || request.level.toLowerCase().includes("primaria")) mantineColor = "green";
+        else if (request.level.toLowerCase().includes("avanzado") || request.level.toLowerCase().includes("secundaria")) mantineColor = "violet";
+        
+        return <PastelBadge label={request.level} mantineColor={mantineColor} />;
+      }
     },
     {
       key: "status",
-      header: <Text className={classes.tableHeader}>Estado</Text>,
+      header: "Estado",
       mobileMinWidth: 130,
       noWrap: true,
       render: (request) => <AdminStatusBadge status={request.status} />,
     },
     {
       key: "created",
-      header: <Text className={classes.tableHeader}>Creada</Text>,
+      header: (
+        <Group gap={4} wrap="nowrap" style={{ cursor: "pointer" }}>
+          <Text size="inherit" fw="inherit" color="inherit" tt="inherit" style={{ letterSpacing: "inherit" }}>Creada</Text>
+          <IconChevronDown size={14} style={{ opacity: 0.5 }} />
+        </Group>
+      ),
       mobileMinWidth: 170,
       noWrap: true,
       render: (request) => (
@@ -120,64 +153,28 @@ export default function AdminRequestsFeature() {
     },
     {
       key: "actions",
-      header: <Text className={classes.tableHeader}>Acciones</Text>,
+      header: "Acciones",
       mobileMinWidth: 90,
       noWrap: true,
       render: (request) => (
         <Group gap="xs" wrap="nowrap">
           <ActionIcon
-            variant="transparent"
+            variant="subtle"
+            color="blue"
             radius="xl"
-            size="lg"
             aria-label={`Ver solicitud de ${request.student_full_name}`}
             onClick={() => openRequest(request)}
-            styles={{
-              root: {
-                border: "none",
-                backgroundColor: "transparent",
-                transition: "transform 160ms ease",
-                "&:hover": {
-                  transform: "translateY(-1px)",
-                  backgroundColor: "transparent",
-                },
-                "& svg": {
-                  color: "var(--mantine-color-black)",
-                  transition: "color 160ms ease",
-                },
-                "&:hover svg": {
-                  color: "var(--mantine-color-brand-7)",
-                },
-              },
-            }}
           >
-            <IconFileDescription size={18} />
+            <IconEye size={18} />
           </ActionIcon>
           <ActionIcon
-            variant="transparent"
+            variant="subtle"
+            color="gray"
             radius="xl"
-            size="lg"
-            aria-label={`Eliminar solicitud de ${request.student_full_name}`}
+            aria-label={`Opciones de ${request.student_full_name}`}
             onClick={() => openRequest(request)}
-            styles={{
-              root: {
-                border: "none",
-                backgroundColor: "transparent",
-                transition: "transform 160ms ease",
-                "&:hover": {
-                  transform: "translateY(-1px)",
-                  backgroundColor: "transparent",
-                },
-                "& svg": {
-                  color: "var(--mantine-color-red-7)",
-                  transition: "color 160ms ease",
-                },
-                "&:hover svg": {
-                  color: "var(--mantine-color-red-9)",
-                },
-              },
-            }}
           >
-            <IconTrash size={18} />
+            <IconDotsVertical size={18} />
           </ActionIcon>
         </Group>
       ),
@@ -333,66 +330,47 @@ export default function AdminRequestsFeature() {
         ) : null}
       </AppModal>
 
-      <Stack gap="pageGapSm" className={classes.page}>
-        <Box className={classes.hero}>
-          <Group justify="space-between" align="flex-start" gap="lg" className={classes.heroInner}>
-            <PageHeader
-              title="Solicitudes"
-              description="Seguimiento rápido de ingresos, revisiones y estado administrativo."
-              breadcrumbs={adminRequestsBreadcrumbs}
-            />
-          </Group>
-        </Box>
-
+      <AdminListTemplate
+        title="Solicitudes"
+        description="Seguimiento rápido de ingresos, revisiones y estado administrativo."
+        breadcrumbs={adminRequestsBreadcrumbs}
+        searchProps={{
+          value: search,
+          onChange: setSearch,
+          placeholder: "Alumno, email o DNI",
+        }}
+        filtersSlot={
+          <Select
+            label="Estado"
+            placeholder="Todos"
+            data={[...REQUEST_STATUS_OPTIONS]}
+            value={statusFilter}
+            onChange={(value) => setStatusFilter((value as RequestStatus | null) ?? null)}
+            clearable
+            style={{ minWidth: 200 }}
+          />
+        }
+      >
         {loadError ? (
-          <Alert variant="filled" color="red" radius="md" icon={<IconAlertCircle size={18} />}>
+          <Alert variant="filled" color="red" radius="md" icon={<IconAlertCircle size={18} />} mb="md">
             {loadError}
           </Alert>
         ) : null}
 
         {schemaWarning ? (
-          <Alert variant="filled" color="yellow" radius="md" icon={<IconAlertCircle size={18} />}>
+          <Alert variant="filled" color="yellow" radius="md" icon={<IconAlertCircle size={18} />} mb="md">
             {schemaWarning}
           </Alert>
         ) : null}
 
-        <AdminSectionCard
-          compact
-          overlayVisible={isLoading && requests.length > 0}
-        >
-          <Grid gutter="md" mb="md" align="end" className={classes.filtersGrid}>
-            <GridCol span={{ base: 12, md: 6 }}>
-              <TextInput
-                label="Buscar"
-                placeholder="Alumno, email o DNI"
-                value={search}
-                onChange={(event) => setSearch(event.currentTarget.value)}
-                leftSection={<IconSearch size={16} />}
-              />
-            </GridCol>
-            <GridCol span={{ base: 12, md: 6 }}>
-              <Select
-                label="Estado"
-                placeholder="Todos"
-                data={[...REQUEST_STATUS_OPTIONS]}
-                value={statusFilter}
-                onChange={(value) => setStatusFilter((value as RequestStatus | null) ?? null)}
-                clearable
-              />
-            </GridCol>
-          </Grid>
-
-          <Box className={classes.tableArea}>
-            <ResponsiveDataTable
-              data={filteredRequests}
-              columns={requestTableColumns}
-              rowKey={(request) => request.id}
-              emptyMessage={emptyRequestsMessage}
-              loading={isLoading}
-            />
-          </Box>
-        </AdminSectionCard>
-      </Stack>
+        <ResponsiveDataTable
+          data={filteredRequests}
+          columns={requestTableColumns}
+          rowKey={(request) => request.id}
+          emptyMessage={emptyRequestsMessage}
+          loading={isLoading}
+        />
+      </AdminListTemplate>
     </>
   );
 }

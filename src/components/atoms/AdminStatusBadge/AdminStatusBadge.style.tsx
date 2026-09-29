@@ -33,8 +33,14 @@ export function getAdminStatusBadgeVars(
   }
 
   return {
-    "--badge-bg": palette[7],
-    "--badge-color": theme.white,
-    "--badge-bd": `1px solid ${palette[8]}`,
+    "--badge-bg": `rgba(${hexToRgb(palette[6])}, 0.1)`,
+    "--badge-color": palette[7],
+    "--badge-bd": "transparent",
   };
+}
+
+// Utilidad simple para convertir hex a rgb para transparencias
+function hexToRgb(hex: string) {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : "0, 0, 0";
 }

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "@mantine/form";
 import { notifications } from "@mantine/notifications";
 
@@ -61,7 +61,16 @@ export function useAdminCourses() {
   const [search, setSearch] = useState("");
   const [createModalOpened, setCreateModalOpened] = useState(false);
   const [editModalOpened, setEditModalOpened] = useState(false);
+  const [deleteModalOpened, setDeleteModalOpened] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<AdminCourse | null>(null);
+
+  const deleteForm = useForm({
+    initialValues: { reason: "" },
+    validate: {
+      reason: (val) => (val.trim().length >= 5 ? null : "Ingresá un motivo válido"),
+    },
+  });
 
 
   const form = useForm<CourseFormValues>({
@@ -129,12 +138,12 @@ export function useAdminCourses() {
     setIsLoading(false);
   };
 
-  const openCreateModal = () => {
+  const openCreateModal = useCallback(() => {
     setSelectedCourse(null);
     form.setValues(initialValues);
     form.resetDirty(initialValues);
     setCreateModalOpened(true);
-  };
+  }, [form]);
 
   useEffect(() => {
     let cancelled = false;
@@ -182,7 +191,7 @@ export function useAdminCourses() {
       window.removeEventListener("admin-courses-refresh", handleRefresh);
       window.removeEventListener("admin-courses-create", handleCreate);
     };
-  }, []);
+  }, [openCreateModal]);
 
   const openEditModal = (course: AdminCourse) => {
     const values = mapCourseToForm(course);
@@ -195,7 +204,35 @@ export function useAdminCourses() {
   const closeModals = () => {
     setCreateModalOpened(false);
     setEditModalOpened(false);
+    setDeleteModalOpened(false);
     setSelectedCourse(null);
+    deleteForm.reset();
+  };
+
+  const openDeleteModal = (course: AdminCourse) => {
+    setSelectedCourse(course);
+    setDeleteModalOpened(true);
+  };
+
+  const deleteCourse = async (values: { reason: string }) => {
+    if (!selectedCourse) return;
+    setIsDeleting(true);
+    
+    // Aquí iría la llamada real a la API. Simulamos con timeout para la demo.
+    const response = await fetch(`/api/admin/courses?id=${selectedCourse.id}`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(values),
+    });
+
+    if (response.ok) {
+      setCourses(courses.filter((c) => c.id !== selectedCourse.id));
+      notifications.show({ title: "Curso eliminado", message: `El curso ${selectedCourse.name} fue eliminado.`, color: "green" });
+      closeModals();
+    } else {
+      notifications.show({ title: "Error", message: "No se pudo eliminar el curso.", color: "red" });
+    }
+    setIsDeleting(false);
   };
 
   const saveCourse = async (values: CourseFormValues) => {
@@ -250,15 +287,19 @@ export function useAdminCourses() {
     filteredCourses,
     createModalOpened,
     editModalOpened,
+    deleteModalOpened,
     selectedCourse,
     form,
+    deleteForm,
     teacherOptions,
     studentOptions,
     setSearch,
     openCreateModal,
     openEditModal,
+    openDeleteModal,
     closeModals,
     saveCourse,
+    deleteCourse,
     loadCourses,
   };
 }

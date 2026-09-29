@@ -32,30 +32,29 @@ export function AdminSectionCard({
 
   return (
     <Card
-      withBorder
-      radius="md"
+      radius="xl"
       style={{
         ...style,
-        borderColor: "rgba(16, 59, 102, 0.10)",
-        boxShadow: "none",
+        border: "1px solid #f1f5f9",
+        boxShadow: "0 4px 20px rgba(0, 0, 0, 0.03), 0 1px 4px rgba(0,0,0,0.02)",
       }}
       p={{
         base: compact ? "cardPadCompactSm" : "cardPadCompactLg",
         md: compact ? "cardPadCompactLg" : "cardPadSm",
       }}
-      bg="white"
+      bg="#ffffff"
     >
       <Stack gap={compact ? "sm" : "sectionGapSm"}>
         {hasHeader ? (
           <Group justify="space-between" align="flex-end" gap="sm">
             <Box>
               {title ? (
-                <Title order={4} c="brand.7">
+                <Title order={4} c="#0f172a" style={{ letterSpacing: "-0.01em", fontWeight: 800 }}>
                   {title}
                 </Title>
               ) : null}
               {description ? (
-                <Text size="sm" c="dimmed" mt={title ? 2 : 0}>
+                <Text size="sm" c="#64748b" mt={title ? 2 : 0}>
                   {description}
                 </Text>
               ) : null}

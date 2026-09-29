@@ -11,6 +11,7 @@ export { ResponsiveDataTable } from "./ResponsiveDataTable/ResponsiveDataTable";
 export type { ResponsiveDataTableColumn } from "./ResponsiveDataTable/ResponsiveDataTable";
 export { RouteSectionLoader } from "./RouteSectionLoader/RouteSectionLoader";
 export { RichTextInput } from "./RichTextInput/RichTextInput";
+export { RoleBadge } from "./RoleBadge/RoleBadge";
 export { DniNumberInput } from "./DniNumberInput/DniNumberInput";
 export { RichTextViewer } from "./RichTextViewer";
 
