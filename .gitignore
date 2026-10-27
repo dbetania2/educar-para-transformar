@@ -46,3 +46,7 @@ supabase/.temp/
 # credentials
 /credenciales-desarrollo.md
 
+# internal documentation and drafts (migrated to wiki)
+/docs/
+/daiana/
+
