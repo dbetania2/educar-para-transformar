@@ -11,6 +11,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test:e2e": "cypress open",
+    "test:e2e:headless": "ELECTRON_RUN_AS_NODE= cypress run --browser firefox --spec 'cypress/e2e/portal_educar.cy.js'",
+    "test:e2e:all": "ELECTRON_RUN_AS_NODE= cypress run --browser firefox",
     "seed:news": "node scripts/seed-news.mjs",
     "seed:auth": "node scripts/seed-development-auth.mjs --yes",
     "seed:no-docente": "node scripts/seed-no-docente-auth.mjs",
@@ -54,6 +57,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "babel-plugin-react-compiler": "1.0.0",
+    "cypress": "^16.2.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.1",
     "typescript": "^5"

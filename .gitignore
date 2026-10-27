@@ -47,6 +47,10 @@ supabase/.temp/
 /credenciales-desarrollo.md
 
 # internal documentation and drafts (migrated to wiki)
-/docs/
+/docs
 /daiana/
+
+# cypress
+cypress/videos
+cypress/screenshots
 
