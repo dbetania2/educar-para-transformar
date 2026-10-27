@@ -10,6 +10,7 @@ import "@mantine/tiptap/styles.css";
 import "@mantine/notifications/styles.css";
 import "@mantine/nprogress/styles.css";
 import "./globals.css";
+import { Analytics } from "@vercel/analytics/next";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -44,6 +45,7 @@ export default function RootLayout({
             {children}
           </AppProvider>
         </EmotionRegistry>
+        <Analytics />
       </body>
     </html>
   );
