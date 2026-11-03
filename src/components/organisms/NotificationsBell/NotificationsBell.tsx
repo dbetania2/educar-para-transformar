@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   ActionIcon,
   Badge,
@@ -47,6 +47,7 @@ type NotificationsBellProps = {
   notifications?: NotificationItem[];
   messagesHref?: string;
   roleTitle?: string;
+  storageKey?: string;
   onMarkAsRead?: (id: string | number) => void;
   onMarkAllAsRead?: () => void;
 };
@@ -55,32 +56,65 @@ export default function NotificationsBell({
   notifications = [],
   messagesHref,
   roleTitle,
+  storageKey,
   onMarkAsRead,
   onMarkAllAsRead,
 }: NotificationsBellProps) {
-  const [internalReadIds, setInternalReadIds] = useState<Set<string | number>>(new Set());
+  const [internalReadIds, setInternalReadIds] = useState<Set<string | number>>(() => {
+    if (typeof window === "undefined" || !storageKey) return new Set();
+    try {
+      const stored = localStorage.getItem(`read_notifications_${storageKey}`);
+      if (stored) {
+        return new Set(JSON.parse(stored) as Array<string | number>);
+      }
+    } catch {
+      // Ignorar errores de localStorage
+    }
+    return new Set();
+  });
   const [modalOpened, setModalOpened] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState<string | null>("all");
 
-  const isRead = (item: NotificationItem) => {
-    return Boolean(item.read_at) || internalReadIds.has(item.id);
-  };
+  const isRead = useCallback(
+    (item: NotificationItem) => {
+      return Boolean(item.read_at) || internalReadIds.has(item.id);
+    },
+    [internalReadIds],
+  );
 
   const handleMarkAsRead = (id: string | number) => {
-    setInternalReadIds((prev) => new Set(prev).add(id));
+    setInternalReadIds((prev) => {
+      const next = new Set(prev).add(id);
+      if (storageKey && typeof window !== "undefined") {
+        try {
+          localStorage.setItem(`read_notifications_${storageKey}`, JSON.stringify(Array.from(next)));
+        } catch {
+          // Fallback silencioso
+        }
+      }
+      return next;
+    });
     onMarkAsRead?.(id);
   };
 
   const handleMarkAllAsRead = () => {
     const allIds = notifications.map((n) => n.id);
-    setInternalReadIds(new Set(allIds));
+    const nextSet = new Set(allIds);
+    setInternalReadIds(nextSet);
+    if (storageKey && typeof window !== "undefined") {
+      try {
+        localStorage.setItem(`read_notifications_${storageKey}`, JSON.stringify(Array.from(nextSet)));
+      } catch {
+        // Fallback silencioso
+      }
+    }
     onMarkAllAsRead?.();
   };
 
   const unreadCount = useMemo(() => {
     return notifications.filter((n) => !isRead(n)).length;
-  }, [notifications, internalReadIds]);
+  }, [notifications, isRead]);
 
   const hasUnread = unreadCount > 0;
   const recentNotifications = notifications.slice(0, 5);
@@ -102,7 +136,7 @@ export default function NotificationsBell({
 
       return true;
     });
-  }, [notifications, searchQuery, activeTab, internalReadIds]);
+  }, [notifications, searchQuery, activeTab, isRead]);
 
   const getNotificationIcon = (type?: NotificationItem["type"]) => {
     switch (type) {
@@ -399,11 +433,7 @@ export default function NotificationsBell({
                                     De: {item.sender}
                                   </Text>
                                 )}
-
-                                <Text size="sm" c="gray.7">
-                                  {item.description}
-                                </Text>
-
+                                <Text size="sm" c="gray.7">{item.description}</Text>
                                 <Group gap="xs" mt="xs" align="center">
                                   {item.category && (
                                     <Badge size="xs" variant="light" color="blue">

@@ -1,24 +1,22 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import type { ActionsMenuItem } from "@/components/molecules";
 import {
   IconBook2,
   IconChartBar,
-  IconFileDescription,
   IconHome,
-  IconKey,
   IconLogout,
   IconNews,
   IconRefresh,
   IconSettings,
-  IconShield,
   IconUserPlus,
   IconUsers,
 } from "@tabler/icons-react";
 
 import RoleDashboardShell from "@/components/organisms/RoleDashboardShell/RoleDashboardShell";
-import NotificationsBell from "@/components/organisms/NotificationsBell";
+import NotificationsBell, { type NotificationItem } from "@/components/organisms/NotificationsBell";
 
 
 type AdminShellProps = {
@@ -60,6 +58,41 @@ const adminNavigation = [
 
 export default function AdminShell({ children }: AdminShellProps) {
   const pathname = usePathname();
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadNotifications = async () => {
+      try {
+        const response = await fetch("/api/admin/notifications");
+        if (!response.ok) return;
+        const data = await response.json();
+        if (!cancelled && Array.isArray(data.notifications)) {
+          setNotifications(data.notifications);
+        }
+      } catch {
+        // Fallback silencioso
+      }
+    };
+
+    void loadNotifications();
+
+    const handleRefresh = () => {
+      void loadNotifications();
+    };
+
+    window.addEventListener("admin-requests-refresh", handleRefresh);
+    window.addEventListener("admin-courses-refresh", handleRefresh);
+    window.addEventListener("admin-users-refresh", handleRefresh);
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener("admin-requests-refresh", handleRefresh);
+      window.removeEventListener("admin-courses-refresh", handleRefresh);
+      window.removeEventListener("admin-users-refresh", handleRefresh);
+    };
+  }, []);
 
   const handleRequestsRefresh = () => {
     window.dispatchEvent(new Event("admin-requests-refresh"));
@@ -151,37 +184,14 @@ export default function AdminShell({ children }: AdminShellProps) {
     );
   }
 
-  const adminNotifications = [
-    {
-      id: "admin-1",
-      title: "Solicitud de admisión pendiente",
-      description: "Luciana Demo (Nivel Inicial) requiere revisión de documentación.",
-      created_at: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-      read_at: null,
-      type: "request" as const,
-      category: "Solicitud de Ingreso",
-      href: "/admin/solicitudes",
-    },
-    {
-      id: "admin-2",
-      title: "Nueva consulta de contacto",
-      description: "Familia Consulta Demo envió una inquietud sobre vacantes.",
-      created_at: new Date(Date.now() - 1000 * 60 * 180).toISOString(),
-      read_at: null,
-      type: "message" as const,
-      category: "Contacto Web",
-      href: "/admin/solicitudes",
-    },
-    {
-      id: "admin-3",
-      title: "Actualización de sistema",
-      description: "Sincronización de legajos y roles docentes ejecutada correctamente.",
-      created_at: new Date(Date.now() - 1000 * 60 * 600).toISOString(),
-      read_at: new Date().toISOString(),
-      type: "system" as const,
-      category: "Sistema",
-    },
-  ];
+  if (pathname.startsWith("/admin/reportes")) {
+    topBarActions.push({
+      key: "refresh-reports",
+      label: "Actualizar",
+      icon: IconRefresh,
+      onClick: () => window.dispatchEvent(new Event("admin-reports-refresh")),
+    });
+  }
 
   return (
     <RoleDashboardShell
@@ -190,7 +200,13 @@ export default function AdminShell({ children }: AdminShellProps) {
       menuAriaLabel="Abrir menú administrativo"
       navigation={adminNavigation}
       topBarActions={topBarActions}
-      topBarSlot={<NotificationsBell notifications={adminNotifications} roleTitle="Administración" />}
+      topBarSlot={
+        <NotificationsBell
+          notifications={notifications}
+          roleTitle="Administración"
+          storageKey="admin"
+        />
+      }
       logoutAction={{
         label: "Cerrar sesión",
         confirmLabel: "Sí, cerrar sesión",
