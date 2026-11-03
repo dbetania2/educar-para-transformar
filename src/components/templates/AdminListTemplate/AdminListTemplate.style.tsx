@@ -125,6 +125,13 @@ export const useStyles = createStyles((theme, _params, helpers) => ({
     display: "flex",
     alignItems: "center",
     gap: 14,
+    // Sin ancho mínimo, la tabla (table-layout: auto + overflow-wrap: anywhere en la celda)
+    // comprime esta columna a una letra y el email se ve en vertical.
+    minWidth: 240,
+  },
+  userTextStack: {
+    minWidth: 0,
+    flex: 1,
   },
   userAvatar: {
     width: 40,
@@ -148,6 +155,9 @@ export const useStyles = createStyles((theme, _params, helpers) => ({
     fontSize: 12,
     color: "#64748b",
     lineHeight: 1.25,
+    // Emails largos: solo cortan si de verdad no entran, nunca letra por letra.
+    wordBreak: "normal",
+    overflowWrap: "anywhere",
   },
   userId: {
     fontSize: 11,

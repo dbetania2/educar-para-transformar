@@ -1,12 +1,13 @@
 "use client";
 
-import type { ComponentProps, Key, ReactNode } from "react";
+import { useState, type ComponentProps, type Key, type ReactNode } from "react";
 import { Table, LoadingOverlay, Box, Stack, Text, Loader } from "@mantine/core";
 import Image from "next/image";
 import logo from "@/assets/logo.png";
 import { useMediaQuery } from "@mantine/hooks";
 
 import { useStyles } from "./ResponsiveDataTable.style";
+import { TablePaginationFooter } from "./TablePaginationFooter";
 
 type ResponsiveTableProps = Omit<ComponentProps<typeof Table>, "children">;
 type ResponsiveTableHeaderProps = Omit<ComponentProps<typeof Table.Th>, "children">;
@@ -36,6 +37,15 @@ type ResponsiveDataTableProps<T> = {
   mobileMinWidth?: number;
   tableProps?: ResponsiveTableProps;
   scrollContainerProps?: ResponsiveScrollContainerProps;
+  /**
+   * Activa la paginación del lado del cliente. Evita montar cientos de filas
+   * (y sus menús/badges) en el DOM cuando el listado crece.
+   */
+  pageSize?: number;
+  /**
+   * Callback opcional al hacer clic en una fila (permite abrir el detalle sin botón de acciones).
+   */
+  onRowClick?: (item: T) => void;
 };
 
 function joinClassNames(...classNames: Array<string | false | null | undefined>) {
@@ -52,11 +62,28 @@ export function ResponsiveDataTable<T>({
   mobileMinWidth,
   tableProps,
   scrollContainerProps,
+  pageSize,
+  onRowClick,
 }: ResponsiveDataTableProps<T>) {
   const { classes } = useStyles();
   const isMobile = useMediaQuery(`(max-width: ${mobileBreakpoint})`);
   const resolvedMobileMinWidth =
     mobileMinWidth ?? columns.reduce((sum, column) => sum + (column.mobileMinWidth ?? 160), 0);
+
+  // Si cambia el dataset (filtros, búsqueda, recarga) se vuelve a la página 1.
+  // Ajuste durante el render (patrón recomendado por React) en lugar de un useEffect.
+  const [pagination, setPagination] = useState({ page: 1, source: data });
+  if (pagination.source !== data) {
+    setPagination({ page: 1, source: data });
+  }
+
+  const isPaginated = typeof pageSize === "number" && pageSize > 0;
+  const totalPages = isPaginated ? Math.max(1, Math.ceil(data.length / pageSize)) : 1;
+  const currentPage = Math.min(pagination.page, totalPages);
+  const visibleData = isPaginated
+    ? data.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+    : data;
+  const showPagination = isPaginated && data.length > pageSize;
 
   const { style: tableStyle, ...tablePropsRest } = tableProps ?? {};
 
@@ -122,11 +149,15 @@ export function ResponsiveDataTable<T>({
       </Table.Thead>
 
       <Table.Tbody>
-        {data.map((item) => {
+        {visibleData.map((item) => {
           const resolvedRowKey = rowKey(item);
 
           return (
-            <Table.Tr key={resolvedRowKey} className={classes.row}>
+            <Table.Tr
+              key={resolvedRowKey}
+              className={joinClassNames(classes.row, Boolean(onRowClick) && classes.clickableRow)}
+              onClick={onRowClick ? () => onRowClick(item) : undefined}
+            >
               {columns.map((column) => {
                 const cellProps =
                   typeof column.cellProps === "function"
@@ -165,16 +196,34 @@ export function ResponsiveDataTable<T>({
     </Box>
   );
 
+  const footer = showPagination ? (
+    <TablePaginationFooter
+      page={currentPage}
+      totalPages={totalPages}
+      totalItems={data.length}
+      pageSize={pageSize ?? data.length}
+      onPageChange={(page) => setPagination({ page, source: data })}
+    />
+  ) : null;
+
   if (!isMobile) {
-    return table;
+    return (
+      <>
+        {table}
+        {footer}
+      </>
+    );
   }
 
   return (
-    <Table.ScrollContainer
-      minWidth={resolvedMobileMinWidth}
-      {...scrollContainerProps}
-    >
-      {table}
-    </Table.ScrollContainer>
+    <>
+      <Table.ScrollContainer
+        minWidth={resolvedMobileMinWidth}
+        {...scrollContainerProps}
+      >
+        {table}
+      </Table.ScrollContainer>
+      {footer}
+    </>
   );
 }

@@ -1,6 +1,12 @@
 "use client";
 
 import { Badge, useMantineTheme } from "@mantine/core";
+import {
+  IconAlertCircle,
+  IconCircleCheck,
+  IconClockHour4,
+  IconEyeCheck,
+} from "@tabler/icons-react";
 
 import { getAdminStatusBadgeVars } from "@/components/atoms/AdminStatusBadge/AdminStatusBadge.style";
 
@@ -23,11 +29,23 @@ export function StatusToneBadge({ children, tone }: StatusToneBadgeProps) {
   const theme = useMantineTheme();
   const vars = getAdminStatusBadgeVars(theme, TONE_TO_REQUEST_STATUS[tone]);
 
+  const icon =
+    tone === "success" ? (
+      <IconCircleCheck size={12} />
+    ) : tone === "danger" ? (
+      <IconAlertCircle size={12} />
+    ) : tone === "review" ? (
+      <IconEyeCheck size={12} />
+    ) : (
+      <IconClockHour4 size={12} />
+    );
+
   return (
     <Badge
       variant="filled"
       radius="xl"
       size="sm"
+      leftSection={icon}
       style={{
         ...vars,
         width: "fit-content",

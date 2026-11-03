@@ -38,4 +38,15 @@ export const useStyles = createStyles((theme) => ({
       backgroundColor: "#f8fafc !important",
     },
   },
+  clickableRow: {
+    cursor: "pointer",
+    "&:hover": {
+      backgroundColor: "#f1f5f9 !important",
+    },
+  },
+  paginationFooter: {
+    padding: "16px 24px",
+    borderTop: "1px solid #f1f5f9",
+    backgroundColor: theme.white,
+  },
 }));
