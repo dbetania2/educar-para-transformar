@@ -21,8 +21,6 @@ import type { AdminUserDetail } from "../types";
 import {
   getRequestStatusLabel,
   getRoleDescription,
-  getUserAvatarBg,
-  getUserInitials,
 } from "../userUtils";
 
 type AdminUserViewDrawerProps = {
@@ -82,14 +80,6 @@ export function AdminUserViewDrawer({
           <Box className={classes.detailHeroCard}>
             <Group justify="space-between" align="flex-start" wrap="wrap" gap="md">
               <Group gap="md" align="center">
-                <Box
-                  className={classes.detailAvatarLarge}
-                  style={{
-                    backgroundColor: getUserAvatarBg(selectedUser.role, selectedUser.fullName),
-                  }}
-                >
-                  {getUserInitials(selectedUser.fullName, selectedUser.email)}
-                </Box>
                 <Stack gap={3}>
                   <Text className={classes.detailHeroName}>
                     {selectedUser.fullName || "Usuario sin nombre"}

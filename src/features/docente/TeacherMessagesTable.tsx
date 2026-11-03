@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
-import { Avatar, Badge, Box, Card, Group, Stack, Text, ThemeIcon, Title } from "@mantine/core";
+import { Badge, Box, Card, Group, Stack, Text, ThemeIcon, Title } from "@mantine/core";
 import { IconBook2, IconMail, IconUserCircle } from "@tabler/icons-react";
 
 import { formatDate } from "@/lib/studentDashboardShared";
@@ -10,12 +10,6 @@ import type { TutorTeacherMessageRecord } from "@/lib/tutorDashboard";
 type TeacherMessagesTableProps = {
   messages: TutorTeacherMessageRecord[];
 };
-
-function getInitials(name: string) {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  const initials = parts.slice(0, 2).map((part) => part[0]).join("");
-  return initials.toUpperCase() || "T";
-}
 
 export default function TeacherMessagesTable({ messages }: TeacherMessagesTableProps) {
   const sortedMessages = useMemo(
@@ -66,9 +60,6 @@ export default function TeacherMessagesTable({ messages }: TeacherMessagesTableP
             <Stack gap={6}>
               <Group justify="space-between" align="flex-start" gap="md">
                 <Group gap="sm" align="flex-start" wrap="nowrap">
-                  <Avatar radius="xl" size={36} color="brand" variant="light">
-                    {getInitials(message.tutor_name)}
-                  </Avatar>
                   <Box>
                     <Group gap="xs" align="center">
                       <Text fw={700}>{message.tutor_name}</Text>

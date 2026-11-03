@@ -1,4 +1,4 @@
-import { Avatar, Badge, Box, Card, Group, Stack, Text, ThemeIcon, Title } from "@mantine/core";
+import { Badge, Box, Card, Group, Stack, Text, ThemeIcon, Title } from "@mantine/core";
 import { IconMail, IconPhone, IconUserCircle } from "@tabler/icons-react";
 
 import type { NoDocenteContactMessageRecord } from "@/lib/noDocenteDashboard";
@@ -14,12 +14,6 @@ function formatDateTime(value: string) {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(date);
-}
-
-function getInitials(name: string) {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  const initials = parts.slice(0, 2).map((part) => part[0]).join("");
-  return initials.toUpperCase() || "M";
 }
 
 export default function NoDocenteMessagesFeed({ messages }: NoDocenteMessagesFeedProps) {
@@ -46,9 +40,6 @@ export default function NoDocenteMessagesFeed({ messages }: NoDocenteMessagesFee
           <Stack gap="md">
             <Group justify="space-between" align="flex-start" gap="md">
               <Group gap="sm" align="flex-start" wrap="nowrap">
-                <Avatar radius="xl" size={44} color="brand" variant="light">
-                  {getInitials(message.full_name)}
-                </Avatar>
                 <Box>
                   <Group gap="xs" align="center">
                     <Text fw={700}>{message.full_name}</Text>

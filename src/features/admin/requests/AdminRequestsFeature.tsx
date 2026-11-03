@@ -1,12 +1,10 @@
 "use client";
 
 import { useMemo } from "react";
-import { ActionIcon, Alert, Avatar, Group, Select, Stack, Text } from "@mantine/core";
+import { Alert, Group, Select, Stack, Text } from "@mantine/core";
 import {
   IconAlertCircle,
   IconChevronDown,
-  IconDotsVertical,
-  IconEye,
 } from "@tabler/icons-react";
 
 import { AdminStatusBadge } from "@/components/atoms";
@@ -76,18 +74,8 @@ export default function AdminRequestsFeature() {
         header: "Alumno",
         mobileMinWidth: 240,
         render: (request) => {
-          const initials = request.student_full_name
-            .split(" ")
-            .map((n) => n[0])
-            .slice(0, 2)
-            .join("")
-            .toUpperCase();
-
           return (
             <Group gap="sm" wrap="nowrap">
-              <Avatar color="violet" radius="xl" size="md">
-                {initials}
-              </Avatar>
               <Stack gap={0}>
                 <Text fw={600} size="sm" c="#0f172a">
                   {request.student_full_name}

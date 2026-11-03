@@ -4,7 +4,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import {
   ActionIcon,
-  Avatar,
   Box,
   Burger,
   Button,
@@ -13,18 +12,16 @@ import {
   Group,
   Indicator,
   List,
-  Menu,
   Modal,
   Stack,
   Text,
-  UnstyledButton,
 } from "@mantine/core";
 import { IconBell, IconChevronDown, type Icon, type IconLogout } from "@tabler/icons-react";
 import Image from "next/image";
 import logo from "@/assets/logo.png";
 
 import { AdminDrawerItem, CTAButton, PaddingContainer } from "@/components/atoms";
-import { ActionsMenu, type ActionsMenuItem } from "@/components/molecules";
+import type { ActionsMenuItem } from "@/components/molecules";
 import NotificationsBell from "@/components/organisms/NotificationsBell";
 
 import { useStyles } from "./RoleDashboardShell.style";
@@ -98,20 +95,6 @@ export default function RoleDashboardShell({
     router.refresh();
     setIsLoggingOut(false);
   };
-
-  const resolvedTopBarActions: ActionsMenuItem[] = [...topBarActions];
-
-  if (resolvedTopBarActions.length > 0) {
-    resolvedTopBarActions.push({ key: "divider-main", divider: true });
-  }
-
-  resolvedTopBarActions.push({
-    key: "logout",
-    label: logoutAction.label,
-    icon: logoutAction.icon,
-    onClick: () => setLogoutModalOpened(true),
-    danger: true,
-  });
 
   return (
     <Box className={classes.shell}>
@@ -298,40 +281,6 @@ export default function RoleDashboardShell({
               <Group gap="md" wrap="nowrap" align="center">
                 {topBarSlot ?? <NotificationsBell roleTitle={title} />}
 
-
-                <Menu position="bottom-end" shadow="md" width={200}>
-                  <Menu.Target>
-                    <UnstyledButton style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                      <Avatar color="blue" radius="xl" size="md" style={{ fontWeight: 700, backgroundColor: "#2563eb", color: "#ffffff" }}>
-                        DA
-                      </Avatar>
-                      <IconChevronDown size={14} style={{ color: "#64748b" }} />
-                    </UnstyledButton>
-                  </Menu.Target>
-                  <Menu.Dropdown>
-                    <Menu.Label>{title}</Menu.Label>
-                    {resolvedTopBarActions.length > 0 ? (
-                      resolvedTopBarActions.map((item) => {
-                        if (item.divider) return <Menu.Divider key={item.key} />;
-                        const ItemIcon = item.icon;
-                        return (
-                          <Menu.Item
-                            key={item.key}
-                            color={item.danger ? "red" : undefined}
-                            leftSection={ItemIcon ? <ItemIcon size={16} /> : undefined}
-                            onClick={item.onClick}
-                          >
-                            {item.label}
-                          </Menu.Item>
-                        );
-                      })
-                    ) : (
-                      <Menu.Item color="red" leftSection={<logoutAction.icon size={16} />} onClick={() => setLogoutModalOpened(true)}>
-                        Cerrar sesión
-                      </Menu.Item>
-                    )}
-                  </Menu.Dropdown>
-                </Menu>
               </Group>
             </Group>
           </PaddingContainer>

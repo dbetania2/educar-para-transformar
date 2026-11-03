@@ -7,7 +7,6 @@ import { StatusToneBadge } from "@/components/atoms";
 import { RoleBadge, type ResponsiveDataTableColumn } from "@/components/molecules";
 import { formatDateTime } from "@/lib/utils/formatDateTime";
 import type { AdminUser } from "../types";
-import { getUserAvatarBg, getUserInitials } from "../userUtils";
 
 type AdminUsersTableClasses = Record<string, string>;
 
@@ -22,14 +21,8 @@ export function getAdminUserTableColumns(params: {
       header: <Text className={classes.tableHeader}>USUARIO</Text>,
       mobileMinWidth: 260,
       render: (user) => {
-        const initials = getUserInitials(user.fullName, user.email);
-        const avatarBg = getUserAvatarBg(user.role, user.fullName);
-
         return (
           <Box className={classes.userCell}>
-            <Box className={classes.userAvatar} style={{ backgroundColor: avatarBg }}>
-              {initials}
-            </Box>
             <Stack gap={2} className={classes.userTextStack}>
               <Text className={classes.userPrimary}>{user.fullName || "Sin nombre"}</Text>
               <Text className={classes.userSecondary}>{user.email}</Text>
