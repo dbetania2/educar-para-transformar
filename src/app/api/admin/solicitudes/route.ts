@@ -21,31 +21,56 @@ export async function GET() {
     return access.error;
   }
 
-  const { data, error } = await access.supabase
-    .from("inscription_requests")
-    .select(
-      `
-        id,
-        student_full_name,
-        student_dni,
-        level,
-        responsible_type,
-        tutor_full_name,
-        tutor_dni,
-        father_full_name,
-        father_dni,
-        mother_full_name,
-        mother_dni,
-        contact_phone,
-        email,
-        status,
-        internal_notes,
-        reviewed_at,
-        reviewed_by,
-        created_at
-      `,
-    )
-    .order("created_at", { ascending: false });
+  const [requestsQuery, coursesQuery] = await Promise.all([
+    access.supabase
+      .from("inscription_requests")
+      .select(
+        `
+          id,
+          student_full_name,
+          student_dni,
+          level,
+          responsible_type,
+          tutor_full_name,
+          tutor_dni,
+          father_full_name,
+          father_dni,
+          mother_full_name,
+          mother_dni,
+          contact_phone,
+          email,
+          status,
+          internal_notes,
+          reviewed_at,
+          reviewed_by,
+          created_at
+        `,
+      )
+      .order("created_at", { ascending: false }),
+    access.supabase
+      .from("courses")
+      .select("id, name, commission, subjects ( name )")
+      .eq("status", "activa")
+      .order("name", { ascending: true }),
+  ]);
+
+  const { data, error } = requestsQuery;
+  const availableCourses = (
+    (coursesQuery.data ?? []) as Array<{
+      id: number;
+      name: string;
+      commission: string | null;
+      subjects: { name: string } | Array<{ name: string }> | null;
+    }>
+  ).map((course) => {
+    const subject = Array.isArray(course.subjects) ? course.subjects[0] : course.subjects;
+    const subjectLabel = subject?.name && subject.name !== course.name ? ` · ${subject.name}` : "";
+    const commissionLabel = course.commission ? ` (${course.commission})` : "";
+    return {
+      value: String(course.id),
+      label: `${course.name}${commissionLabel}${subjectLabel}`,
+    };
+  });
 
   if (hasWorkflowColumnsError(error)) {
     const fallback = await access.supabase
@@ -104,5 +129,9 @@ export async function GET() {
     );
   }
 
-  return NextResponse.json({ requests: data ?? [], workflowEnabled: true });
+  return NextResponse.json({
+    requests: data ?? [],
+    availableCourses,
+    workflowEnabled: true,
+  });
 }
