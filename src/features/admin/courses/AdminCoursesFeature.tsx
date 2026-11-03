@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ActionIcon, Alert, Badge, Box, Card, Grid, GridCol, Group, SimpleGrid, Stack, Text, Textarea, Tooltip } from "@mantine/core";
+import { ActionIcon, Alert, Badge, Button, Card, Grid, GridCol, Group, SimpleGrid, Stack, Text, Textarea, Tooltip } from "@mantine/core";
 import { IconAlertCircle, IconEye, IconPencil, IconTrash } from "@tabler/icons-react";
 
 import { StatusToneBadge } from "@/components/atoms";
@@ -39,6 +39,7 @@ export default function AdminCoursesFeature() {
     dbSchedules,
     isLoading,
     isSaving,
+    isDeleting,
     loadError,
     search,
     filteredCourses,
@@ -67,99 +68,49 @@ export default function AdminCoursesFeature() {
     return viewCourse.studentProfileIds.map((profileId) => studentsById.get(profileId)).filter(Boolean);
   }, [students, viewCourse]);
 
-  const columns: ResponsiveDataTableColumn<AdminCourse>[] = [
-    {
-      key: "selection",
-      header: "",
-      mobileMinWidth: 50,
-      render: () => (
-        <Box pl="sm">
-          <input type="checkbox" style={{ width: 16, height: 16, borderRadius: 4, border: "1px solid #cbd5e1", cursor: "pointer", accentColor: "#0ea5e9" }} />
-        </Box>
-      ),
-    },
-    {
-      key: "course",
-      header: "Curso",
-      mobileMinWidth: 260,
-      render: (course) => (
-        <Stack gap={0}>
-          <Text fw={600} size="sm" c="#0f172a">{course.name}</Text>
-          <Text size="xs" c="#64748b">{course.subjectName}</Text>
-        </Stack>
-      ),
-    },
-    {
-      key: "teacher",
-      header: "Docente",
-      mobileMinWidth: 220,
-      render: (course) => <Text size="sm" c="#334155">{course.teacherName ?? "Sin docente"}</Text>,
-    },
-    {
-      key: "students",
-      header: "Alumnos",
-      mobileMinWidth: 120,
-      noWrap: true,
-      render: (course) => <Badge variant="light" color="blue" radius="xl">{course.studentCount}</Badge>,
-    },
-    {
-      key: "status",
-      header: "Estado",
-      mobileMinWidth: 140,
-      noWrap: true,
-      render: (course) => <StatusToneBadge tone={courseStatusTone(course.status)}>{courseStatusLabel(course.status)}</StatusToneBadge>,
-    },
-    {
-      key: "created",
-      header: "Alta",
-      mobileMinWidth: 160,
-      noWrap: true,
-      render: (course) => <Text size="sm" c="#64748b">{formatDateTime(course.createdAt)}</Text>,
-    },
-    {
-      key: "actions",
-      header: "Acciones",
-      mobileMinWidth: 130,
-      noWrap: true,
-      render: (course) => (
-        <Group gap="xs" wrap="nowrap">
-          <Tooltip label="Ver curso">
-            <ActionIcon
-              variant="subtle"
-              color="blue"
-              radius="xl"
-              aria-label={`Ver ${course.name}`}
-              onClick={() => setViewCourse(course)}
-            >
-              <IconEye size={18} />
-            </ActionIcon>
-          </Tooltip>
-          <Tooltip label="Editar curso">
-            <ActionIcon
-              variant="subtle"
-              color="gray"
-              radius="xl"
-              aria-label={`Editar ${course.name}`}
-              onClick={() => openEditModal(course)}
-            >
-              <IconPencil size={18} />
-            </ActionIcon>
-          </Tooltip>
-          <Tooltip label="Eliminar curso">
-            <ActionIcon
-              variant="subtle"
-              color="red"
-              radius="xl"
-              aria-label={`Eliminar ${course.name}`}
-              onClick={() => openDeleteModal(course)}
-            >
-              <IconTrash size={18} />
-            </ActionIcon>
-          </Tooltip>
-        </Group>
-      ),
-    },
-  ];
+  const columns: ResponsiveDataTableColumn<AdminCourse>[] = useMemo(
+    () => [
+      {
+        key: "course",
+        header: "Curso",
+        mobileMinWidth: 260,
+        render: (course) => (
+          <Stack gap={0}>
+            <Text fw={600} size="sm" c="#0f172a">{course.name}</Text>
+            <Text size="xs" c="#64748b">{course.subjectName}</Text>
+          </Stack>
+        ),
+      },
+      {
+        key: "teacher",
+        header: "Docente",
+        mobileMinWidth: 220,
+        render: (course) => <Text size="sm" c="#334155">{course.teacherName ?? "Sin docente"}</Text>,
+      },
+      {
+        key: "students",
+        header: "Alumnos",
+        mobileMinWidth: 120,
+        noWrap: true,
+        render: (course) => <Badge variant="light" color="blue" radius="xl">{course.studentCount}</Badge>,
+      },
+      {
+        key: "status",
+        header: "Estado",
+        mobileMinWidth: 140,
+        noWrap: true,
+        render: (course) => <StatusToneBadge tone={courseStatusTone(course.status)}>{courseStatusLabel(course.status)}</StatusToneBadge>,
+      },
+      {
+        key: "created",
+        header: "Alta",
+        mobileMinWidth: 160,
+        noWrap: true,
+        render: (course) => <Text size="sm" c="#64748b">{formatDateTime(course.createdAt)}</Text>,
+      },
+    ],
+    [],
+  );
 
   const emptyMessage = courses.length === 0
     ? "Todavía no hay cursos cargados."
@@ -235,6 +186,37 @@ export default function AdminCoursesFeature() {
                 )}
               </Stack>
             </Card>
+
+            <Group justify="flex-end" gap="sm" mt="md" pt="md" style={{ borderTop: "1px solid #f1f5f9" }}>
+              <Button
+                variant="subtle"
+                color="red"
+                size="sm"
+                radius="md"
+                leftSection={<IconTrash size={16} />}
+                onClick={() => {
+                  const target = viewCourse;
+                  setViewCourse(null);
+                  openDeleteModal(target);
+                }}
+              >
+                Eliminar curso
+              </Button>
+              <Button
+                variant="filled"
+                color="blue"
+                size="sm"
+                radius="md"
+                leftSection={<IconPencil size={16} />}
+                onClick={() => {
+                  const target = viewCourse;
+                  setViewCourse(null);
+                  openEditModal(target);
+                }}
+              >
+                Editar curso
+              </Button>
+            </Group>
           </Stack>
         ) : null}
       </AdminFormDrawerTemplate>
@@ -270,6 +252,7 @@ export default function AdminCoursesFeature() {
         submitLabel="Eliminar curso"
         submitIcon={<IconTrash size={18} />}
         cancelLabel="Cancelar"
+        isSubmitting={isDeleting}
         formId="admin-course-delete-form"
       >
         <form id="admin-course-delete-form" onSubmit={deleteForm.onSubmit((values: { reason: string }) => void deleteCourse(values))}>
@@ -332,6 +315,8 @@ export default function AdminCoursesFeature() {
           data={filteredCourses}
           columns={columns}
           rowKey={(course) => course.id}
+          pageSize={25}
+          onRowClick={(course) => setViewCourse(course)}
           emptyMessage={emptyMessage}
           loading={isLoading}
         />

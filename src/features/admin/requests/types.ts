@@ -1,5 +1,10 @@
 export type RequestStatus = "pendiente" | "en_revision" | "aprobada" | "rechazada";
 
+export type AvailableCourseOption = {
+  value: string;
+  label: string;
+};
+
 export type AdminRequest = {
   id: number;
   student_full_name: string;
@@ -25,6 +30,7 @@ export type RequestsResponsePayload = {
   error?: string;
   code?: string;
   requests?: AdminRequest[];
+  availableCourses?: AvailableCourseOption[];
   schemaWarning?: string;
   workflowEnabled?: boolean;
 };

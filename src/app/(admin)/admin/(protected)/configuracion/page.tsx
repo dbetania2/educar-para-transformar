@@ -1,9 +1,9 @@
 import { PageHeader } from "@/components/molecules";
-import { Box, Card, Text } from "@mantine/core";
+import { Card, Stack, Text } from "@mantine/core";
 
 export default function AdminConfiguracionPage() {
   return (
-    <Box style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+    <Stack gap="lg">
       <PageHeader
         title="Configuración"
         description="Ajustes generales del panel administrativo."
@@ -12,6 +12,6 @@ export default function AdminConfiguracionPage() {
       <Card withBorder radius="md" p="xl" bg="white">
         <Text c="dimmed">Módulo de configuración global en desarrollo.</Text>
       </Card>
-    </Box>
+    </Stack>
   );
 }

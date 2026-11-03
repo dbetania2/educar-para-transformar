@@ -25,6 +25,12 @@ export type AdminGuardianLink = {
 
 export type AdminUserDetail = AdminUser & {
   dni: string | null;
+  phone: string | null;
+  address: string | null;
+  specialty: string | null;
+  sports: string[];
+  transportRoute: string;
+  diningService: string;
   requestStatus: string | null;
   requestStudentFullName: string | null;
   requestStudentDni: string | null;
@@ -49,6 +55,11 @@ export type CreateUserValues = {
   role: AppUserRole;
   level: string;
   contactPhone: string;
+  address: string;
+  specialty: string;
+  sports: string[];
+  transportRoute: string;
+  diningService: string;
   responsibleType: StudentResponsibleType;
   tutorFullName: string;
   tutorDni: string;
@@ -63,6 +74,12 @@ export type EditUserValues = {
   fullName: string;
   email: string;
   dni: string;
+  phone: string;
+  address: string;
+  specialty: string;
+  sports: string[];
+  transportRoute: string;
+  diningService: string;
   role: AppUserRole;
   reason: string;
   tutorStudentDni: string;

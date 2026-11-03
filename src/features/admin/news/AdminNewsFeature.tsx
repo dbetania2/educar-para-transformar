@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { ActionIcon, Alert, Badge, Button, Card, Drawer, FileInput, Group, Modal, Stack, Switch, Text, TextInput, Tooltip } from "@mantine/core";
-import { IconAlertCircle, IconEye, IconPencil, IconSearch, IconTrash } from "@tabler/icons-react";
+import { useMemo, useState } from "react";
+import { ActionIcon, Alert, Button, Card, Drawer, FileInput, Group, Modal, Stack, Switch, Text, TextInput, Tooltip } from "@mantine/core";
+import { IconAlertCircle, IconEye, IconPencil, IconTrash } from "@tabler/icons-react";
 
-import { CTAButton } from "@/components/atoms";
+import { CTAButton, StatusToneBadge } from "@/components/atoms";
 import { AdminPageLoader, ResponsiveDataTable, RichTextInput, RichTextViewer, type ResponsiveDataTableColumn } from "@/components/molecules";
 import { AdminListTemplate } from "@/components/templates/AdminListTemplate/AdminListTemplate";
 import { formatDateTime } from "@/lib/utils/formatDateTime";
@@ -43,68 +43,46 @@ export default function AdminNewsFeature() {
     if (deleted) setDeleteTarget(null);
   };
 
-  const columns: ResponsiveDataTableColumn<AdminNews>[] = [
-    {
-      key: "title",
-      header: <Text fw={700}>Noticia</Text>,
-      mobileMinWidth: 280,
-      render: (item) => (
-        <Stack gap={4}>
-          <Text fw={700} c="brand.7" style={{ overflowWrap: "anywhere" }}>{item.title}</Text>
-          <Text size="sm" c="dimmed">{item.fileName ?? "Sin archivo"}</Text>
-        </Stack>
-      ),
-    },
-    {
-      key: "status",
-      header: <Text fw={700}>Estado</Text>,
-      mobileMinWidth: 140,
-      noWrap: true,
-      render: (item) => (
-        <Badge variant="light" color={item.isPublished ? "green" : "gray"} radius="xl">
-          {item.isPublished ? "Publicada" : "Borrador"}
-        </Badge>
-      ),
-    },
-    {
-      key: "file",
-      header: <Text fw={700}>Archivo</Text>,
-      mobileMinWidth: 140,
-      render: (item) => <Text size="sm">{item.imageUrl ? "Imagen" : "Sin imagen"}</Text>,
-    },
-    {
-      key: "created",
-      header: <Text fw={700}>Alta</Text>,
-      mobileMinWidth: 170,
-      noWrap: true,
-      render: (item) => <Text size="sm">{formatDateTime(item.createdAt)}</Text>,
-    },
-    {
-      key: "actions",
-      header: <Text fw={700}>Acciones</Text>,
-      mobileMinWidth: 150,
-      noWrap: true,
-      render: (item) => (
-        <Group gap="xs" wrap="nowrap">
-          <Tooltip label="Ver noticia">
-            <ActionIcon variant="subtle" color="brand.7" aria-label="Ver noticia" onClick={() => setPreviewNews(item)}>
-              <IconEye size={18} />
-            </ActionIcon>
-          </Tooltip>
-          <Tooltip label="Editar noticia">
-            <ActionIcon variant="subtle" color="brand.7" aria-label="Editar noticia" onClick={() => openEditModal(item)}>
-              <IconPencil size={18} />
-            </ActionIcon>
-          </Tooltip>
-          <Tooltip label="Eliminar noticia">
-            <ActionIcon variant="subtle" color="red" aria-label="Eliminar noticia" loading={isDeleting} onClick={() => setDeleteTarget(item)}>
-              <IconTrash size={18} />
-            </ActionIcon>
-          </Tooltip>
-        </Group>
-      ),
-    },
-  ];
+  const columns: ResponsiveDataTableColumn<AdminNews>[] = useMemo(
+    () => [
+      {
+        key: "title",
+        header: <Text fw={700}>Noticia</Text>,
+        mobileMinWidth: 280,
+        render: (item) => (
+          <Stack gap={4}>
+            <Text fw={700} c="brand.7" style={{ overflowWrap: "anywhere" }}>{item.title}</Text>
+            <Text size="sm" c="dimmed">{item.fileName ?? "Sin archivo"}</Text>
+          </Stack>
+        ),
+      },
+      {
+        key: "status",
+        header: <Text fw={700}>Estado</Text>,
+        mobileMinWidth: 140,
+        noWrap: true,
+        render: (item) => (
+          <StatusToneBadge tone={item.isPublished ? "success" : "pending"}>
+            {item.isPublished ? "Publicada" : "Borrador"}
+          </StatusToneBadge>
+        ),
+      },
+      {
+        key: "file",
+        header: <Text fw={700}>Archivo</Text>,
+        mobileMinWidth: 140,
+        render: (item) => <Text size="sm">{item.imageUrl ? "Imagen" : "Sin imagen"}</Text>,
+      },
+      {
+        key: "created",
+        header: <Text fw={700}>Alta</Text>,
+        mobileMinWidth: 170,
+        noWrap: true,
+        render: (item) => <Text size="sm">{formatDateTime(item.createdAt)}</Text>,
+      },
+    ],
+    [],
+  );
 
   if (isLoading) {
     return <AdminPageLoader title="Noticias" description="Gestioná las noticias públicas." breadcrumbs={breadcrumbs} loadingLabel="Cargando noticias..." />;
@@ -138,6 +116,8 @@ export default function AdminNewsFeature() {
           data={filteredNews}
           columns={columns}
           rowKey={(item) => item.id}
+          pageSize={25}
+          onRowClick={(item) => setPreviewNews(item)}
           emptyMessage="Todavía no hay noticias cargadas."
         />
       </AdminListTemplate>
@@ -190,9 +170,11 @@ export default function AdminNewsFeature() {
       >
         {previewNews ? (
           <Stack gap="blockGapLg">
-            <Badge variant="light" color={previewNews.isPublished ? "green" : "gray"} radius="xl" w="fit-content">
-              {previewNews.isPublished ? "Publicada" : "Borrador"}
-            </Badge>
+            <Group>
+              <StatusToneBadge tone={previewNews.isPublished ? "success" : "pending"}>
+                {previewNews.isPublished ? "Publicada" : "Borrador"}
+              </StatusToneBadge>
+            </Group>
             <Text component="h2" fw={800} c="brand.7" size="xl" lh={1.15}>
               {previewNews.title}
             </Text>
@@ -209,9 +191,36 @@ export default function AdminNewsFeature() {
               </Card>
             ) : null}
             <RichTextViewer value={previewNews.descriptionHtml} />
-            <CTAButton type="button" ctaVariant="secondary" fullWidth onClick={() => setPreviewNews(null)}>
-              Cerrar
-            </CTAButton>
+            <Group justify="flex-end" gap="sm" mt="md" pt="md" style={{ borderTop: "1px solid #f1f5f9" }}>
+              <Button
+                variant="subtle"
+                color="red"
+                size="sm"
+                radius="md"
+                leftSection={<IconTrash size={16} />}
+                onClick={() => {
+                  const target = previewNews;
+                  setPreviewNews(null);
+                  setDeleteTarget(target);
+                }}
+              >
+                Eliminar noticia
+              </Button>
+              <Button
+                variant="filled"
+                color="blue"
+                size="sm"
+                radius="md"
+                leftSection={<IconPencil size={16} />}
+                onClick={() => {
+                  const target = previewNews;
+                  setPreviewNews(null);
+                  openEditModal(target);
+                }}
+              >
+                Editar noticia
+              </Button>
+            </Group>
           </Stack>
         ) : null}
       </Drawer>

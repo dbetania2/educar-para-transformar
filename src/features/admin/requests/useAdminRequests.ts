@@ -1,8 +1,10 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { notifications } from "@mantine/notifications";
 
+import { validateStudentSports } from "@/lib/extracurricular";
 import type {
   AdminRequest,
+  AvailableCourseOption,
   RequestsResponsePayload,
   RequestStatus,
 } from "./types";
@@ -32,6 +34,7 @@ export function getResponsibleLines(request: AdminRequest) {
 
 export function useAdminRequests() {
   const [requests, setRequests] = useState<AdminRequest[]>([]);
+  const [availableCourses, setAvailableCourses] = useState<AvailableCourseOption[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [schemaWarning, setSchemaWarning] = useState<string | null>(null);
@@ -42,10 +45,14 @@ export function useAdminRequests() {
   const [deleteReason, setDeleteReason] = useState("");
   const [draftStatus, setDraftStatus] = useState<RequestStatus>("pendiente");
   const [draftNotes, setDraftNotes] = useState("");
+  const [draftCourseIds, setDraftCourseIds] = useState<string[]>([]);
+  const [draftSports, setDraftSports] = useState<string[]>([]);
+  const [draftTransportRoute, setDraftTransportRoute] = useState<string>("No Registrado");
+  const [draftDiningService, setDraftDiningService] = useState<string>("No Registrado");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<RequestStatus | null>(null);
 
-  const loadRequests = async (notifyOnError = true) => {
+  const loadRequests = useCallback(async (notifyOnError = true) => {
     setIsLoading(true);
     setLoadError(null);
     setSchemaWarning(null);
@@ -55,6 +62,7 @@ export function useAdminRequests() {
 
     if (response.status === 409 && payload?.code === "ADMIN_REQUESTS_MIGRATION_REQUIRED") {
       setRequests(payload?.requests ?? []);
+      setAvailableCourses(payload?.availableCourses ?? []);
       setSchemaWarning(payload?.schemaWarning ?? payload?.error ?? null);
       setWorkflowEnabled(false);
       setLoadError(null);
@@ -79,10 +87,11 @@ export function useAdminRequests() {
     }
 
     setRequests(payload?.requests ?? []);
+    setAvailableCourses(payload?.availableCourses ?? []);
     setSchemaWarning(payload?.schemaWarning ?? null);
     setWorkflowEnabled(payload?.workflowEnabled ?? true);
     setIsLoading(false);
-  };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -97,6 +106,7 @@ export function useAdminRequests() {
 
       if (response.status === 409 && payload?.code === "ADMIN_REQUESTS_MIGRATION_REQUIRED") {
         setRequests(payload?.requests ?? []);
+        setAvailableCourses(payload?.availableCourses ?? []);
         setSchemaWarning(payload?.schemaWarning ?? payload?.error ?? null);
         setWorkflowEnabled(false);
         setLoadError(null);
@@ -114,6 +124,7 @@ export function useAdminRequests() {
       }
 
       setRequests(payload?.requests ?? []);
+      setAvailableCourses(payload?.availableCourses ?? []);
       setSchemaWarning(payload?.schemaWarning ?? null);
       setWorkflowEnabled(payload?.workflowEnabled ?? true);
       setLoadError(null);
@@ -137,18 +148,34 @@ export function useAdminRequests() {
     return () => {
       window.removeEventListener("admin-requests-refresh", handleTopBarRefresh);
     };
-  });
+  }, [loadRequests]);
 
-  const openRequest = (request: AdminRequest) => {
+  const openRequest = useCallback((request: AdminRequest) => {
     setSelectedRequest(request);
     setDraftStatus(request.status);
     setDraftNotes(request.internal_notes ?? "");
+    setDraftCourseIds([]);
+    setDraftSports([]);
+    setDraftTransportRoute("No Registrado");
+    setDraftDiningService("No Registrado");
     setDeleteReason("");
-  };
+  }, []);
 
   const handleSaveRequest = async () => {
     if (!selectedRequest || !workflowEnabled) {
       return;
+    }
+
+    if (draftStatus === "aprobada" && draftSports.length > 0) {
+      const sportsError = validateStudentSports(draftSports);
+      if (sportsError) {
+        notifications.show({
+          title: "Choque horario en deportes",
+          message: sportsError,
+          color: "red",
+        });
+        return;
+      }
     }
 
     setIsUpdating(true);
@@ -161,6 +188,14 @@ export function useAdminRequests() {
       body: JSON.stringify({
         status: draftStatus,
         internalNotes: draftNotes,
+        ...(draftStatus === "aprobada"
+          ? {
+              courseIds: draftCourseIds.map((id) => Number(id)),
+              sports: draftSports,
+              transportRoute: draftTransportRoute,
+              diningService: draftDiningService,
+            }
+          : {}),
       }),
     });
 
@@ -189,7 +224,10 @@ export function useAdminRequests() {
 
     notifications.show({
       title: "Solicitud actualizada",
-      message: `La solicitud quedó en estado ${draftStatus}.`,
+      message:
+        draftStatus === "aprobada"
+          ? "Se aprobó la inscripción, se crearon las cuentas de alumno/responsables y se asignaron sus servicios."
+          : `La solicitud quedó en estado ${draftStatus}.`,
       color: "green",
     });
 
@@ -258,21 +296,24 @@ export function useAdminRequests() {
     setDeleteReason("");
   };
 
-  const filteredRequests = requests.filter((request) => {
+  const filteredRequests = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
-    const matchesSearch =
-      normalizedSearch.length === 0 ||
-      request.student_full_name.toLowerCase().includes(normalizedSearch) ||
-      request.email.toLowerCase().includes(normalizedSearch) ||
-      request.student_dni.toLowerCase().includes(normalizedSearch);
+    return requests.filter((request) => {
+      const matchesSearch =
+        normalizedSearch.length === 0 ||
+        request.student_full_name.toLowerCase().includes(normalizedSearch) ||
+        request.email.toLowerCase().includes(normalizedSearch) ||
+        request.student_dni.toLowerCase().includes(normalizedSearch);
 
-    const matchesStatus = !statusFilter || request.status === statusFilter;
+      const matchesStatus = !statusFilter || request.status === statusFilter;
 
-    return matchesSearch && matchesStatus;
-  });
+      return matchesSearch && matchesStatus;
+    });
+  }, [requests, search, statusFilter]);
 
   return {
     requests,
+    availableCourses,
     isLoading,
     loadError,
     schemaWarning,
@@ -283,6 +324,10 @@ export function useAdminRequests() {
     deleteReason,
     draftStatus,
     draftNotes,
+    draftCourseIds,
+    draftSports,
+    draftTransportRoute,
+    draftDiningService,
     search,
     statusFilter,
     filteredRequests,
@@ -294,6 +339,10 @@ export function useAdminRequests() {
     setSelectedRequest,
     setDraftStatus,
     setDraftNotes,
+    setDraftCourseIds,
+    setDraftSports,
+    setDraftTransportRoute,
+    setDraftDiningService,
     setDeleteReason,
     setSearch,
     setStatusFilter,

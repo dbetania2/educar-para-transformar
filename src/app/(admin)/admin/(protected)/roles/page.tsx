@@ -1,9 +1,9 @@
 import { PageHeader } from "@/components/molecules";
-import { Box, Card, Text } from "@mantine/core";
+import { Card, Stack, Text } from "@mantine/core";
 
 export default function AdminRolesPage() {
   return (
-    <Box style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+    <Stack gap="lg">
       <PageHeader
         title="Roles"
         description="Gestión de roles y perfiles de acceso en el sistema."
@@ -12,6 +12,6 @@ export default function AdminRolesPage() {
       <Card withBorder radius="md" p="xl" bg="white">
         <Text c="dimmed">Módulo de gestión de roles en configuración.</Text>
       </Card>
-    </Box>
+    </Stack>
   );
 }

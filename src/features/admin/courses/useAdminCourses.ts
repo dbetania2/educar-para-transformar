@@ -109,7 +109,7 @@ export function useAdminCourses() {
     );
   }, [courses, search]);
 
-  const loadCourses = async (notifyOnError = true) => {
+  const loadCourses = useCallback(async (notifyOnError = true) => {
     setIsLoading(true);
     setLoadError(null);
 
@@ -136,7 +136,7 @@ export function useAdminCourses() {
     setDbClassrooms(payload?.classrooms ?? []);
     setDbSchedules(payload?.schedules ?? []);
     setIsLoading(false);
-  };
+  }, []);
 
   const openCreateModal = useCallback(() => {
     setSelectedCourse(null);
@@ -191,28 +191,28 @@ export function useAdminCourses() {
       window.removeEventListener("admin-courses-refresh", handleRefresh);
       window.removeEventListener("admin-courses-create", handleCreate);
     };
-  }, [openCreateModal]);
+  }, [loadCourses, openCreateModal]);
 
-  const openEditModal = (course: AdminCourse) => {
+  const openEditModal = useCallback((course: AdminCourse) => {
     const values = mapCourseToForm(course);
     setSelectedCourse(course);
     form.setValues(values);
     form.resetDirty(values);
     setEditModalOpened(true);
-  };
+  }, [form]);
 
-  const closeModals = () => {
+  const closeModals = useCallback(() => {
     setCreateModalOpened(false);
     setEditModalOpened(false);
     setDeleteModalOpened(false);
     setSelectedCourse(null);
     deleteForm.reset();
-  };
+  }, [deleteForm]);
 
-  const openDeleteModal = (course: AdminCourse) => {
+  const openDeleteModal = useCallback((course: AdminCourse) => {
     setSelectedCourse(course);
     setDeleteModalOpened(true);
-  };
+  }, []);
 
   const deleteCourse = async (values: { reason: string }) => {
     if (!selectedCourse) return;
@@ -282,6 +282,7 @@ export function useAdminCourses() {
     dbSchedules,
     isLoading,
     isSaving,
+    isDeleting,
     loadError,
     search,
     filteredCourses,

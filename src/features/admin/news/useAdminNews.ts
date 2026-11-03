@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "@mantine/form";
 import { notifications } from "@mantine/notifications";
 
@@ -54,7 +54,7 @@ export function useAdminNews() {
     return news.filter((item) => item.title.toLowerCase().includes(term));
   }, [news, search]);
 
-  const loadNews = async (notifyOnError = true) => {
+  const loadNews = useCallback(async (notifyOnError = true) => {
     setIsLoading(true);
     setLoadError(null);
     const response = await fetch("/api/admin/news");
@@ -70,14 +70,14 @@ export function useAdminNews() {
 
     setNews(payload?.news ?? []);
     setIsLoading(false);
-  };
+  }, []);
 
-  const openCreateModal = () => {
+  const openCreateModal = useCallback(() => {
     setSelectedNews(null);
     form.setValues(initialValues);
     form.resetDirty(initialValues);
     setModalOpened(true);
-  };
+  }, [form]);
 
   useEffect(() => {
     let cancelled = false;
@@ -118,22 +118,22 @@ export function useAdminNews() {
       window.removeEventListener("admin-news-refresh", handleRefresh);
       window.removeEventListener("admin-news-create", handleCreate);
     };
-  });
+  }, [loadNews, openCreateModal]);
 
-  const openEditModal = (item: AdminNews) => {
+  const openEditModal = useCallback((item: AdminNews) => {
     const values = mapNewsToForm(item);
     setSelectedNews(item);
     form.setValues(values);
     form.resetDirty(values);
     setModalOpened(true);
-  };
+  }, [form]);
 
-  const closeModal = () => {
+  const closeModal = useCallback(() => {
     setModalOpened(false);
     setSelectedNews(null);
     form.setValues(initialValues);
     form.resetDirty(initialValues);
-  };
+  }, [form]);
 
   const saveNews = async (values: NewsFormValues) => {
     setIsSaving(true);
