@@ -52,29 +52,42 @@ export function getLegajoFromUser(user: Pick<User, "app_metadata" | "user_metada
   return null;
 }
 
-export async function generateUniqueLegajo(
-  supabase: AdminSupabaseClient,
-  role: AppUserRole,
+export function collectExistingLegajos(
+  users: Array<Pick<User, "app_metadata" | "user_metadata">>,
 ) {
-  const users = await listAllAuthUsers(supabase);
-
-  const existingLegajos = new Set(
+  return new Set(
     users
       .map((user) => getLegajoFromUser(user))
       .filter((value): value is string => typeof value === "string" && value.length > 0),
   );
+}
 
+/**
+ * Genera un legajo único contra un set ya cargado en memoria y lo reserva en ese set.
+ * Permite generar varios legajos en una misma request sin volver a listar
+ * todos los usuarios de Auth ni producir colisiones entre llamadas concurrentes.
+ */
+export function generateLegajoFromSet(existingLegajos: Set<string>, role: AppUserRole) {
   const prefix = getLegajoPrefix(role);
 
   for (let attempt = 0; attempt < 30; attempt += 1) {
     const candidate = `${prefix}${randomSixDigits()}`;
 
     if (!existingLegajos.has(candidate)) {
+      existingLegajos.add(candidate);
       return candidate;
     }
   }
 
   throw new Error("No se pudo generar un legajo único.");
+}
+
+export async function generateUniqueLegajo(
+  supabase: AdminSupabaseClient,
+  role: AppUserRole,
+) {
+  const users = await listAllAuthUsers(supabase);
+  return generateLegajoFromSet(collectExistingLegajos(users), role);
 }
 
 export function getRoleFromLegajoCarrier(user: {

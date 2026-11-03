@@ -1,5 +1,6 @@
 import { buildFullName, normalizeEmail, splitFullName } from "@/lib/academicProfiles";
 import { listAllAuthUsers } from "@/lib/auth/authUsers";
+import { getLegajoFromUser, generateUniqueLegajo } from "@/lib/auth/legajo";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export type AdminSupabaseClient = ReturnType<typeof createAdminClient>;
@@ -12,6 +13,7 @@ export type BasicProfile = {
   dni: string;
   email: string | null;
   phone: string | null;
+  address?: string | null;
   is_active?: boolean | null;
 };
 
@@ -19,9 +21,12 @@ function normalizeDni(dni: string) {
   return dni.trim();
 }
 
-
 export function buildInternalStudentEmail(legajo: string) {
   return `${legajo.trim().toLowerCase()}@alumnos.educar.test`;
+}
+
+export function buildInternalTutorEmail(dniOrLegajo: string) {
+  return `tutor.${dniOrLegajo.trim().toLowerCase()}@tutores.educar.test`;
 }
 
 export function buildTutorLegajo(studentLegajo: string) {
@@ -35,48 +40,94 @@ export async function ensureTutorAuthAccount(params: {
   dni: string;
   email: string;
   password: string;
-  legajo: string;
+  legajo?: string;
 }) {
-  const { supabase, profileId, fullName, dni, password, legajo } = params;
-  const email = normalizeEmail(params.email);
-
-  if (!email) {
-    throw new Error("No se pudo crear la cuenta del tutor porque falta el email del responsable.");
-  }
+  const { supabase, profileId, fullName, dni, password } = params;
+  const cleanDni = dni.trim();
+  const requestedEmail = normalizeEmail(params.email) ?? buildInternalTutorEmail(cleanDni);
 
   const users = await listAllAuthUsers(supabase);
-  const existingUser = users.find((user) => user.email?.trim().toLowerCase() === email);
+  const existingProfile = await getProfileByDni(supabase, cleanDni);
+
+  // 1. Buscar si este tutor ya tiene usuario Auth (por auth_user_id de su perfil o por DNI en metadata)
+  const existingTutorUser = users.find(
+    (u) =>
+      (existingProfile?.auth_user_id && u.id === existingProfile.auth_user_id) ||
+      u.user_metadata?.dni === cleanDni ||
+      u.app_metadata?.dni === cleanDni,
+  );
+
+  if (existingTutorUser) {
+    // Tutor ya registrado (ej. padre/madre inscribiendo a un 2do o 3er hermano):
+    // Conservamos su legajo original y su contraseña actual sin pisarlos.
+    const preservedLegajo =
+      getLegajoFromUser(existingTutorUser) ||
+      params.legajo ||
+      (await generateUniqueLegajo(supabase, "tutor"));
+
+    const updated = await supabase.auth.admin.updateUserById(existingTutorUser.id, {
+      email_confirm: true,
+      app_metadata: {
+        ...(existingTutorUser.app_metadata ?? {}),
+        role: "tutor",
+        legajo: preservedLegajo,
+        dni: cleanDni,
+      },
+      user_metadata: {
+        ...(existingTutorUser.user_metadata ?? {}),
+        role: "tutor",
+        legajo: preservedLegajo,
+        dni: cleanDni,
+        full_name: fullName,
+      },
+    });
+
+    if (updated.error || !updated.data.user) {
+      throw new Error(updated.error?.message ?? "No se pudo sincronizar la cuenta existente del tutor.");
+    }
+
+    await supabase
+      .from("profiles")
+      .update({
+        auth_user_id: updated.data.user.id,
+        is_active: true,
+      })
+      .eq("id", profileId);
+
+    return updated.data.user;
+  }
+
+  // 2. Es un tutor nuevo: verificamos si el email familiar ya está ocupado por otro usuario (ej. el otro progenitor)
+  const emailOccupiedByOther = users.some(
+    (u) => u.email?.trim().toLowerCase() === requestedEmail,
+  );
+  const effectiveEmail = emailOccupiedByOther ? buildInternalTutorEmail(cleanDni) : requestedEmail;
+
+  const legajoOccupied = params.legajo
+    ? users.some((u) => getLegajoFromUser(u)?.toUpperCase() === params.legajo?.toUpperCase())
+    : true;
+  const effectiveLegajo =
+    !legajoOccupied && params.legajo
+      ? params.legajo
+      : await generateUniqueLegajo(supabase, "tutor");
+
   const metadata = {
     role: "tutor",
-    legajo,
-    dni: dni.trim(),
+    legajo: effectiveLegajo,
+    dni: cleanDni,
+    contact_email: requestedEmail,
   };
 
-  const userResult = existingUser
-    ? await supabase.auth.admin.updateUserById(existingUser.id, {
-        email,
-        password,
-        email_confirm: true,
-        app_metadata: {
-          ...(existingUser.app_metadata ?? {}),
-          ...metadata,
-        },
-        user_metadata: {
-          ...(existingUser.user_metadata ?? {}),
-          ...metadata,
-          full_name: fullName,
-        },
-      })
-    : await supabase.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: true,
-        app_metadata: metadata,
-        user_metadata: {
-          ...metadata,
-          full_name: fullName,
-        },
-      });
+  const userResult = await supabase.auth.admin.createUser({
+    email: effectiveEmail,
+    password,
+    email_confirm: true,
+    app_metadata: metadata,
+    user_metadata: {
+      ...metadata,
+      full_name: fullName,
+    },
+  });
 
   if (userResult.error || !userResult.data.user) {
     throw new Error(userResult.error?.message ?? "No se pudo crear la cuenta del tutor.");
@@ -86,7 +137,7 @@ export async function ensureTutorAuthAccount(params: {
     .from("profiles")
     .update({
       auth_user_id: userResult.data.user.id,
-      email,
+      email: effectiveEmail,
       is_active: true,
     })
     .eq("id", profileId);
@@ -101,7 +152,7 @@ export async function ensureTutorAuthAccount(params: {
 export async function getProfileByAuthUserId(supabase: AdminSupabaseClient, authUserId: string) {
   const query = await supabase
     .from("profiles")
-    .select("id, auth_user_id, first_name, last_name, dni, email, phone")
+    .select("id, auth_user_id, first_name, last_name, dni, email, phone, address, is_active")
     .eq("auth_user_id", authUserId)
     .maybeSingle();
 
@@ -115,7 +166,7 @@ export async function getProfileByAuthUserId(supabase: AdminSupabaseClient, auth
 export async function getProfileByDni(supabase: AdminSupabaseClient, dni: string) {
   const query = await supabase
     .from("profiles")
-    .select("id, auth_user_id, first_name, last_name, dni, email, phone")
+    .select("id, auth_user_id, first_name, last_name, dni, email, phone, address, is_active")
     .eq("dni", normalizeDni(dni))
     .maybeSingle();
 
@@ -131,17 +182,31 @@ export async function getProfilesByAuthUserIds(supabase: AdminSupabaseClient, au
     return new Map<string, BasicProfile>();
   }
 
-  const query = await supabase
-    .from("profiles")
-    .select("id, auth_user_id, first_name, last_name, dni, email, phone")
-    .in("auth_user_id", authUserIds);
+  // PostgREST envía el filtro `in` en la URL: con cientos de UUIDs supera el límite
+  // de longitud. Se consulta en lotes paralelos.
+  const PROFILE_CHUNK_SIZE = 150;
+  const chunks: string[][] = [];
+  for (let index = 0; index < authUserIds.length; index += PROFILE_CHUNK_SIZE) {
+    chunks.push(authUserIds.slice(index, index + PROFILE_CHUNK_SIZE));
+  }
 
-  if (query.error) {
-    throw new Error(query.error.message ?? "No se pudieron obtener los perfiles administrativos.");
+  const results = await Promise.all(
+    chunks.map((chunk) =>
+      supabase
+        .from("profiles")
+        .select("id, auth_user_id, first_name, last_name, dni, email, phone, address, is_active")
+        .in("auth_user_id", chunk),
+    ),
+  );
+
+  const failed = results.find((result) => result.error);
+  if (failed?.error) {
+    throw new Error(failed.error.message ?? "No se pudieron obtener los perfiles administrativos.");
   }
 
   return new Map(
-    ((query.data ?? []) as BasicProfile[])
+    results
+      .flatMap((result) => (result.data ?? []) as BasicProfile[])
       .filter((profile) => typeof profile.auth_user_id === "string" && profile.auth_user_id.length > 0)
       .map((profile) => [profile.auth_user_id as string, profile]),
   );
@@ -154,8 +219,9 @@ export async function upsertProfile(params: {
   dni: string;
   email?: string | null;
   phone?: string | null;
+  address?: string | null;
 }) {
-  const { supabase, authUserId = null, fullName, dni, email = null, phone = null } = params;
+  const { supabase, authUserId = null, fullName, dni, email = null, phone = null, address = null } = params;
   const normalizedDni = normalizeDni(dni);
   const normalizedEmail = normalizeEmail(email);
   const names = splitFullName(fullName);
@@ -177,13 +243,14 @@ export async function upsertProfile(params: {
         auth_user_id: authUserId ?? existingProfile.auth_user_id,
         first_name: names.firstName,
         last_name: names.lastName,
-        dni: normalizedDni,
+        dni: existingProfile.dni || normalizedDni,
         email: normalizedEmail ?? existingProfile.email,
-        phone: phone ?? existingProfile.phone,
-        is_active: true,
+        phone: phone !== null ? phone : existingProfile.phone,
+        address: address !== null ? address : (existingProfile.address ?? null),
+        is_active: existingProfile.is_active ?? true,
       })
       .eq("id", existingProfile.id)
-      .select("id, auth_user_id, first_name, last_name, dni, email, phone")
+      .select("id, auth_user_id, first_name, last_name, dni, email, phone, address, is_active")
       .single();
 
     if (updateQuery.error) {
@@ -202,9 +269,10 @@ export async function upsertProfile(params: {
       dni: normalizedDni,
       email: normalizedEmail,
       phone,
+      address,
       is_active: true,
     })
-    .select("id, auth_user_id, first_name, last_name, dni, email, phone")
+    .select("id, auth_user_id, first_name, last_name, dni, email, phone, address, is_active")
     .single();
 
   if (insertQuery.error) {
@@ -219,6 +287,8 @@ export async function syncProfileNameAndEmail(params: {
   authUserId: string;
   fullName: string;
   email: string;
+  phone?: string | null;
+  address?: string | null;
 }) {
   const profile = await getProfileByAuthUserId(params.supabase, params.authUserId);
 
@@ -233,10 +303,11 @@ export async function syncProfileNameAndEmail(params: {
       first_name: names.firstName,
       last_name: names.lastName,
       email: normalizeEmail(params.email),
-      is_active: true,
+      phone: params.phone !== undefined ? params.phone : profile.phone,
+      address: params.address !== undefined ? params.address : (profile.address ?? null),
     })
     .eq("id", profile.id)
-    .select("id, auth_user_id, first_name, last_name, dni, email, phone")
+    .select("id, auth_user_id, first_name, last_name, dni, email, phone, address, is_active")
     .single();
 
   if (query.error) {
@@ -310,19 +381,28 @@ export async function ensureTeacherRecord(params: {
   supabase: AdminSupabaseClient;
   profileId: string;
   teacherCode: string;
+  title?: string | null;
   hireDate?: string | null;
 }) {
-  const { supabase, profileId, teacherCode, hireDate = null } = params;
+  const { supabase, profileId, teacherCode, title, hireDate = null } = params;
+  const payload: {
+    profile_id: string;
+    teacher_code: string;
+    hire_date: string | null;
+    title?: string | null;
+  } = {
+    profile_id: profileId,
+    teacher_code: teacherCode,
+    hire_date: hireDate,
+  };
+
+  if (title !== undefined) {
+    payload.title = title;
+  }
+
   const query = await supabase
     .from("teachers")
-    .upsert(
-      {
-        profile_id: profileId,
-        teacher_code: teacherCode,
-        hire_date: hireDate,
-      },
-      { onConflict: "profile_id" },
-    )
+    .upsert(payload, { onConflict: "profile_id" })
     .select("profile_id")
     .single();
 
@@ -331,204 +411,6 @@ export async function ensureTeacherRecord(params: {
   }
 
   return query.data as { profile_id: string };
-}
-
-export async function ensureGuardianLink(params: {
-  supabase: AdminSupabaseClient;
-  studentProfileId: string;
-  guardianProfileId: string;
-  relationshipType: GuardianRelationshipType;
-  isPrimary: boolean;
-}) {
-  const { supabase, studentProfileId, guardianProfileId, relationshipType, isPrimary } = params;
-  const query = await supabase
-    .from("student_guardians")
-    .insert({
-      student_profile_id: studentProfileId,
-      guardian_profile_id: guardianProfileId,
-      relationship_type: relationshipType,
-      is_primary: isPrimary,
-    });
-
-  if (query.error && query.error.code !== "23505") {
-    throw new Error(query.error.message ?? "No se pudo vincular el responsable del alumno.");
-  }
-}
-
-export type GuardianRelationshipType = "tutor" | "madre" | "padre" | "responsable" | "otro";
-
-export type GuardianStudentLink = {
-  profileId: string;
-  fullName: string;
-  dni: string;
-  email: string | null;
-  relationshipType: GuardianRelationshipType;
-  isPrimary: boolean;
-};
-
-export async function getStudentProfileByDni(supabase: AdminSupabaseClient, dni: string) {
-  const profile = await getProfileByDni(supabase, dni);
-
-  if (!profile) {
-    return null;
-  }
-
-  const query = await supabase
-    .from("students")
-    .select("profile_id, student_code")
-    .eq("profile_id", profile.id)
-    .maybeSingle();
-
-  if (query.error) {
-    throw new Error(query.error.message ?? "No se pudo obtener el alumno por DNI.");
-  }
-
-  if (!query.data) {
-    return null;
-  }
-
-  return {
-    profile,
-    studentCode: query.data.student_code as string | null,
-  };
-}
-
-export async function getGuardianLinksForStudent(
-  supabase: AdminSupabaseClient,
-  studentProfileId: string,
-): Promise<GuardianStudentLink[]> {
-  const linksQuery = await supabase
-    .from("student_guardians")
-    .select("guardian_profile_id, relationship_type, is_primary")
-    .eq("student_profile_id", studentProfileId)
-    .order("is_primary", { ascending: false });
-
-  if (linksQuery.error) {
-    throw new Error(linksQuery.error.message ?? "No se pudieron obtener los tutores vinculados.");
-  }
-
-  const links = (linksQuery.data ?? []) as Array<{
-    guardian_profile_id: string;
-    relationship_type: GuardianRelationshipType;
-    is_primary: boolean;
-  }>;
-  const guardianProfileIds = links.map((link) => link.guardian_profile_id);
-
-  if (guardianProfileIds.length === 0) {
-    return [];
-  }
-
-  const profilesQuery = await supabase
-    .from("profiles")
-    .select("id, first_name, last_name, dni, email")
-    .in("id", guardianProfileIds);
-
-  if (profilesQuery.error) {
-    throw new Error(profilesQuery.error.message ?? "No se pudieron obtener los perfiles de tutores.");
-  }
-
-  const profilesById = new Map(
-    ((profilesQuery.data ?? []) as Array<{ id: string; first_name: string; last_name: string; dni: string; email: string | null }>)
-      .map((profile) => [profile.id, profile]),
-  );
-
-  return links.flatMap((link) => {
-    const profile = profilesById.get(link.guardian_profile_id);
-
-    if (!profile) {
-      return [];
-    }
-
-    return [{
-      profileId: profile.id,
-      fullName: buildFullName(profile.first_name, profile.last_name),
-      dni: profile.dni,
-      email: profile.email,
-      relationshipType: link.relationship_type,
-      isPrimary: link.is_primary,
-    }];
-  });
-}
-
-export async function getStudentLinksForGuardian(
-  supabase: AdminSupabaseClient,
-  guardianProfileId: string,
-): Promise<GuardianStudentLink[]> {
-  const linksQuery = await supabase
-    .from("student_guardians")
-    .select("student_profile_id, relationship_type, is_primary")
-    .eq("guardian_profile_id", guardianProfileId)
-    .order("is_primary", { ascending: false });
-
-  if (linksQuery.error) {
-    throw new Error(linksQuery.error.message ?? "No se pudieron obtener los alumnos vinculados.");
-  }
-
-  const links = (linksQuery.data ?? []) as Array<{
-    student_profile_id: string;
-    relationship_type: GuardianRelationshipType;
-    is_primary: boolean;
-  }>;
-  const studentProfileIds = links.map((link) => link.student_profile_id);
-
-  if (studentProfileIds.length === 0) {
-    return [];
-  }
-
-  const profilesQuery = await supabase
-    .from("profiles")
-    .select("id, first_name, last_name, dni, email")
-    .in("id", studentProfileIds);
-
-  if (profilesQuery.error) {
-    throw new Error(profilesQuery.error.message ?? "No se pudieron obtener los perfiles de alumnos.");
-  }
-
-  const profilesById = new Map(
-    ((profilesQuery.data ?? []) as Array<{ id: string; first_name: string; last_name: string; dni: string; email: string | null }>)
-      .map((profile) => [profile.id, profile]),
-  );
-
-  return links.flatMap((link) => {
-    const profile = profilesById.get(link.student_profile_id);
-
-    if (!profile) {
-      return [];
-    }
-
-    return [{
-      profileId: profile.id,
-      fullName: buildFullName(profile.first_name, profile.last_name),
-      dni: profile.dni,
-      email: profile.email,
-      relationshipType: link.relationship_type,
-      isPrimary: link.is_primary,
-    }];
-  });
-}
-
-export async function linkGuardianToStudentByDni(params: {
-  supabase: AdminSupabaseClient;
-  guardianProfileId: string;
-  studentDni: string;
-  relationshipType?: GuardianRelationshipType;
-  isPrimary?: boolean;
-}) {
-  const student = await getStudentProfileByDni(params.supabase, params.studentDni);
-
-  if (!student) {
-    throw new Error("No se encontró un alumno activo con ese DNI para vincular al tutor.");
-  }
-
-  await ensureGuardianLink({
-    supabase: params.supabase,
-    studentProfileId: student.profile.id,
-    guardianProfileId: params.guardianProfileId,
-    relationshipType: params.relationshipType ?? "tutor",
-    isPrimary: params.isPrimary ?? true,
-  });
-
-  return student.profile;
 }
 
 export async function insertAuditLog(params: {
@@ -561,3 +443,14 @@ export function getProfileFullName(profile: Pick<BasicProfile, "first_name" | "l
 
   return buildFullName(profile.first_name, profile.last_name);
 }
+
+export {
+  ensureGuardianLink,
+  getStudentProfileByDni,
+  getGuardianLinksForStudent,
+  getStudentLinksForGuardian,
+  linkGuardianToStudentByDni,
+  enrollStudentInCourses,
+  type GuardianRelationshipType,
+  type GuardianStudentLink,
+} from "./guardianLinks";
