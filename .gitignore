@@ -50,3 +50,7 @@ supabase/.temp/
 /docs/
 /daiana/
 
+# cypress
+cypress/videos
+cypress/screenshots
+
