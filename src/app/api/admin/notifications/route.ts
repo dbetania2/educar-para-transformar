@@ -19,7 +19,7 @@ export async function GET() {
     return access.error;
   }
 
-  const [requestsQuery, messagesQuery, auditQuery] = await Promise.all([
+  const [requestsQuery, messagesQuery, auditQuery, receiptsQuery] = await Promise.all([
     // 1. Solicitudes de inscripción pendientes de revisión
     access.supabase
       .from("inscription_requests")
@@ -39,6 +39,14 @@ export async function GET() {
     access.supabase
       .from("audit_logs")
       .select("id, action, entity_name, created_at")
+      .order("created_at", { ascending: false })
+      .limit(5),
+
+    // 4. Comprobantes de pago en revisión enviados desde la app móvil
+    access.supabase
+      .from("comprobantes_pago")
+      .select("id, total, archivo_nombre, created_at, estado_validacion")
+      .eq("estado_validacion", "En Revisión")
       .order("created_at", { ascending: false })
       .limit(5),
   ]);
@@ -86,6 +94,25 @@ export async function GET() {
         created_at: audit.created_at,
         type: "system",
         category: "Sistema",
+      });
+    }
+  }
+
+  // Mapear comprobantes de pago en revisión enviados desde la app móvil
+  if (receiptsQuery.data) {
+    for (const receipt of receiptsQuery.data) {
+      const formattedTotal = new Intl.NumberFormat("es-AR", {
+        style: "currency",
+        currency: "ARS",
+      }).format(Number(receipt.total ?? 0));
+      notifications.push({
+        id: `receipt-${receipt.id}`,
+        title: `Comprobante de pago #${receipt.id} en revisión`,
+        description: `Importe declarado: ${formattedTotal} (${receipt.archivo_nombre}).`,
+        created_at: receipt.created_at,
+        type: "request",
+        category: "Pagos y Cobranzas",
+        href: "/admin/pagos",
       });
     }
   }
