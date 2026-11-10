@@ -9,6 +9,7 @@ import {
   IconHome,
   IconLogout,
   IconNews,
+  IconReceipt2,
   IconRefresh,
   IconSettings,
   IconUserPlus,
@@ -43,6 +44,11 @@ const adminNavigation = [
     href: "/admin/noticias",
     label: "Noticias",
     icon: IconNews,
+  },
+  {
+    href: "/admin/pagos",
+    label: "Pagos y Cobranzas",
+    icon: IconReceipt2,
   },
   {
     href: "/admin/reportes",
@@ -85,12 +91,14 @@ export default function AdminShell({ children }: AdminShellProps) {
     window.addEventListener("admin-requests-refresh", handleRefresh);
     window.addEventListener("admin-courses-refresh", handleRefresh);
     window.addEventListener("admin-users-refresh", handleRefresh);
+    window.addEventListener("admin-payments-refresh", handleRefresh);
 
     return () => {
       cancelled = true;
       window.removeEventListener("admin-requests-refresh", handleRefresh);
       window.removeEventListener("admin-courses-refresh", handleRefresh);
       window.removeEventListener("admin-users-refresh", handleRefresh);
+      window.removeEventListener("admin-payments-refresh", handleRefresh);
     };
   }, []);
 
@@ -190,6 +198,15 @@ export default function AdminShell({ children }: AdminShellProps) {
       label: "Actualizar",
       icon: IconRefresh,
       onClick: () => window.dispatchEvent(new Event("admin-reports-refresh")),
+    });
+  }
+
+  if (pathname.startsWith("/admin/pagos")) {
+    topBarActions.push({
+      key: "refresh-payments",
+      label: "Actualizar",
+      icon: IconRefresh,
+      onClick: () => window.dispatchEvent(new Event("admin-payments-refresh")),
     });
   }
 
